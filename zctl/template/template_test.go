@@ -2,9 +2,9 @@ package template
 
 import (
 	"fmt"
+	"github.com/SunMaybo/zero/zctl/parser"
 	"io/ioutil"
 	"testing"
-	"zero/zctl/parser"
 )
 
 var rpcMetadata parser.RpcMetadata
