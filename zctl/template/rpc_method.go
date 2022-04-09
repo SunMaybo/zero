@@ -2,7 +2,7 @@ package template
 
 const RPCMethodTemplate = `package {{.PackageName}}
 
-import "zero/common/zrpc"
+import "github.com/SunMaybo/zero/common/zrpc"
 
 const (
 {{range $index, $method := .Names}}

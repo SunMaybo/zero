@@ -5,12 +5,12 @@ const RPCMainTemplate = `package main
 import (
 	"flag"
 	"google.golang.org/grpc"
-	"zero/common/zcfg"
-	"zero/common/zrpc"
-	"zero/proto/{{.Module}}/{{.PackageName}}"
-	"zero/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/config"
-	"zero/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/server"
-	"zero/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/svc"
+	"github.com/SunMaybo/zero/common/zcfg"
+	"github.com/SunMaybo/zero/common/zrpc"
+	"{{.Project}}/proto/{{.Module}}/{{.PackageName}}"
+	"{{.Project}}/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/config"
+	"{{.Project}}/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/server"
+	"{{.Project}}/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/svc"
 )
 
 var cfgPath = flag.String("cfg", "etc/config.yaml", "cfg path")
