@@ -1,0 +1,18 @@
+syntax = "proto3";
+package service;
+option go_package = "/greeter";
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc SayHelloWord(HelloRequest)returns (HelloReply) {}
+  rpc SayStream(stream HelloRequest)returns(stream HelloReply){}
+  rpc SayStream1(stream HelloRequest)returns(HelloReply){}
+  rpc SayStream2(HelloRequest)returns(stream HelloReply){}
+}
+message HelloRequest {
+  string name = 1;
+}
+message HelloReply {
+  //用户编号
+  // @inject_tag: validate:"required,max=32"
+  string message = 1;
+}
