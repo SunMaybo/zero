@@ -1,6 +1,9 @@
 package zrpc
 
-import "github.com/nacos-group/nacos-sdk-go/common/constant"
+import (
+	"errors"
+	"github.com/nacos-group/nacos-sdk-go/common/constant"
+)
 
 const (
 	Nacos_Server_Center_Name = "nacos"
@@ -35,40 +38,57 @@ type ServiceInstance struct {
 	Weight      float64
 	Metadata    map[string]string
 }
+type SubscribeParam struct {
+	ServiceName       string
+	Clusters          []string
+	GroupName         string
+	SubscribeCallback func(services []ServiceInstance)
+}
+
+type SelectInstancesParam struct {
+	Clusters    []string `param:"clusters"`
+	ServiceName string   `param:"serviceName"`
+	GroupName   string   `param:"groupName"`
+	HealthyOnly bool     `param:"healthyOnly"`
+}
 type CenterClient interface {
+	GetSchema() string
 	DoRegister(instance ServiceInstance) error
 	DeRegister(instance ServiceInstance) error
+	Subscribe(param *SubscribeParam) error
+	SelectInstances(instances SelectInstancesParam) ([]ServiceInstance, error)
 }
 type ServerCenterClient struct {
 	client *CenterClient
 }
 
-func NewCenterClient(cfg SeverCenterConfig) CenterClient {
-	if cfg.Enable {
-		switch cfg.ServerCenterName {
-		case Nacos_Server_Center_Name:
-			clientConfig := constant.ClientConfig{
-				TimeoutMs:    cfg.TimeoutMs,
-				BeatInterval: cfg.BeatInterval,
-				NamespaceId:  cfg.NamespaceId,
-				CacheDir:     cfg.CacheDir,
-				Username:     cfg.Username,
-				Password:     cfg.Password,
-				LogDir:       cfg.LogDir,
-				LogLevel:     cfg.LogLevel,
-			}
-			var serverConfigs []constant.ServerConfig
-			for _, config := range cfg.ServerConfigs {
-				serverConfigs = append(serverConfigs, constant.ServerConfig{
-					Scheme:      config.Scheme,
-					ContextPath: config.ContextPath,
-					IpAddr:      config.IpAddr,
-					Port:        config.Port,
-				})
-			}
-			return NewNacosClient(&clientConfig, serverConfigs)
-
-		}
+func NewSingleCenterClient(cfg SeverCenterConfig) (CenterClient, error) {
+	if len(cfg.ServerConfigs) <= 0 {
+		return nil, errors.New("server configs is empty")
 	}
-	return nil
+	switch cfg.ServerCenterName {
+	case Nacos_Server_Center_Name:
+		clientConfig := constant.ClientConfig{
+			TimeoutMs:    cfg.TimeoutMs,
+			BeatInterval: cfg.BeatInterval,
+			NamespaceId:  cfg.NamespaceId,
+			CacheDir:     cfg.CacheDir,
+			Username:     cfg.Username,
+			Password:     cfg.Password,
+			LogDir:       cfg.LogDir,
+			LogLevel:     cfg.LogLevel,
+		}
+		var serverConfigs []constant.ServerConfig
+		for _, config := range cfg.ServerConfigs {
+			serverConfigs = append(serverConfigs, constant.ServerConfig{
+				Scheme:      config.Scheme,
+				ContextPath: config.ContextPath,
+				IpAddr:      config.IpAddr,
+				Port:        config.Port,
+			})
+		}
+		return NewSingleNacosClient(&clientConfig, serverConfigs)
+
+	}
+	return nil, errors.New("not support server center name:" + cfg.ServerCenterName)
 }

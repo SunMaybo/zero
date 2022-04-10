@@ -4,6 +4,9 @@ const RPCLogicTemplate = `package logic
 
 import (
 	"context"
+	"context"
+	"go.uber.org/zap"
+	"github.com/SunMaybo/zero/common/zlog"
 	"{{.Project}}/proto/{{.Module}}/{{.PackageName}}"
 	"{{.Project}}/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/svc"
 )
@@ -11,12 +14,14 @@ import (
 type {{.MethodName}}Logic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
+	logger *zap.SugaredLogger
 }
 
 func New{{.MethodName}}Logic(ctx context.Context, svcCtx *svc.ServiceContext) *{{.MethodName}}Logic {
 	return &{{.MethodName}}Logic{
 		ctx:    ctx,
 		svcCtx: svcCtx,
+		logger: zlog.WithContext(ctx),
 	}
 }
 func (l *{{.MethodName}}Logic) {{.MethodName}}{{.Sign}} {

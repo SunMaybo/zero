@@ -1,7 +1,10 @@
 package zlog
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-client-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"net"
@@ -147,4 +150,17 @@ func RecoveryWithZap(production bool) gin.HandlerFunc {
 		}()
 		c.Next()
 	}
+}
+func WithContext(ctx context.Context) *zap.SugaredLogger {
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		switch span.Context().(type) {
+		case jaeger.SpanContext:
+			span := span.Context().(jaeger.SpanContext)
+			return S.With(zap.String("span_id", span.SpanID().String()), zap.String("trace_id", span.TraceID().String()))
+		default:
+			return S
+		}
+
+	}
+	return S
 }

@@ -1,89 +1,104 @@
 package zrpc
 
 import (
+	"context"
 	"fmt"
 	"github.com/SunMaybo/zero/common/zlog"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_revovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/nacos-group/nacos-sdk-go/common/logger"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/uber/jaeger-client-go"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/resolver"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
+	"strings"
 	"syscall"
 	"time"
 )
 
+type HystrixConfigTable map[string]*HystrixConfig
 type RpcCfg struct {
-	SeverCenterConfig SeverCenterConfig `yaml:"center"`
-	Name              string            `yaml:"name"`
-	Port              int               `yaml:"port"`
-	Weight            float64           `yaml:"weight"`
-	IsOnline          bool              `yaml:"is_online"`
-	Metadata          map[string]string `yaml:"metadata"`
-	ClusterName       string            `yaml:"cluster_name"` // the cluster name
-	GroupName         string            `yaml:"group_name"`   // the group name
-	Timeout           int               `yaml:"timeout"`
-	EnableMetrics     bool              `yaml:"enable_metrics"`
-	MetricsPort       int               `yaml:"metrics_port"`
-	MetricsPath       string            `yaml:"metrics_path"`
+	SeverCenterConfig SeverCenterConfig  `yaml:"center"`
+	Hystrix           HystrixConfigTable `yaml:"hystrix"`
+	Name              string             `yaml:"name"`
+	Port              int                `yaml:"port"`
+	Weight            float64            `yaml:"weight"`
+	IsOnline          bool               `yaml:"is_online"`
+	Metadata          map[string]string  `yaml:"metadata"`
+	ClusterName       string             `yaml:"cluster_name"` // the cluster name
+	GroupName         string             `yaml:"group_name"`   // the group name
+	Timeout           int                `yaml:"timeout"`
+	EnableMetrics     bool               `yaml:"enable_metrics"`
+	MetricsPort       int                `yaml:"metrics_port"`
+	MetricsPath       string             `yaml:"metrics_path"`
 }
 
 type Server struct {
 	grpcServer *grpc.Server
 	logger     *zap.Logger
-	center     CenterClient
 	isRegister *atomic.Bool
 	rpcCfg     RpcCfg
+	tracer     opentracing.Tracer
 }
 
-var onceCenter = sync.Once{}
+func NewServer(cfg RpcCfg, options ...grpc.ServerOption) *Server {
+	tracer, _ := jaeger.NewTracer(
+		"grpc",
+		jaeger.NewConstSampler(true),
+		jaeger.NewNullReporter(),
+	)
+	return NewServerWithTracer(cfg, tracer, options...)
+}
 
-func NewServer(cfg RpcCfg, unaryServerInterceptors []grpc.UnaryServerInterceptor, streamServerInterceptors []grpc.StreamServerInterceptor) *Server {
+func NewServerWithTracer(cfg RpcCfg, tracer opentracing.Tracer, options ...grpc.ServerOption) *Server {
 	// init logger
 	zlog.InitLogger(cfg.IsOnline)
 	// setting grpc server timeout
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = 5000
 	}
-	var options = []grpc.UnaryServerInterceptor{
+	var defaultOptions = []grpc.UnaryServerInterceptor{
 		grpc_zap.UnaryServerInterceptor(zlog.LOGGER),
 		NewValidatorInterceptor().Interceptor,
 		grpc_revovery.UnaryServerInterceptor(),
+		otgrpc.OpenTracingServerInterceptor(tracer),
 		UnaryTimeoutInterceptor(time.Duration(cfg.Timeout) * time.Millisecond),
 	}
-	options = append(options, unaryServerInterceptors...)
-
-	streamOptions := []grpc.StreamServerInterceptor{
+	defaultStreamOptions := []grpc.StreamServerInterceptor{
 		grpc_zap.StreamServerInterceptor(zlog.LOGGER),
 		grpc_revovery.StreamServerInterceptor(),
+		otgrpc.OpenTracingStreamServerInterceptor(tracer),
 		grpc_prometheus.StreamServerInterceptor,
 	}
-	streamOptions = append(streamOptions, streamServerInterceptors...)
-
 	if cfg.EnableMetrics {
-		options = append(options, grpc_prometheus.UnaryServerInterceptor)
-		streamOptions = append(streamOptions, grpc_prometheus.StreamServerInterceptor)
+		defaultOptions = append(defaultOptions, grpc_prometheus.UnaryServerInterceptor)
+		defaultStreamOptions = append(defaultStreamOptions, grpc_prometheus.StreamServerInterceptor)
 		//begin prometheus metrics
 		go bindingMetrics(cfg.MetricsPath, cfg.MetricsPort)
 	}
-
+	options = append(options, grpc.UnaryInterceptor(
+		grpc_middleware.ChainUnaryServer(defaultOptions...),
+	), grpc.StreamInterceptor(
+		grpc_middleware.ChainStreamServer(defaultStreamOptions...),
+	))
 	return &Server{
-		grpcServer: grpc.NewServer(
-			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(options...)),
-			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamOptions...)),
-		),
+		grpcServer: grpc.NewServer(options...),
 		rpcCfg:     cfg,
 		isRegister: atomic.NewBool(false),
 		logger:     zlog.LOGGER,
+		tracer:     tracer,
 	}
 }
 
@@ -134,10 +149,11 @@ func (s *Server) register() {
 		return
 	}
 	time.Sleep(3 * time.Second)
-	onceCenter.Do(func() {
-		s.center = NewCenterClient(s.rpcCfg.SeverCenterConfig)
-	})
-	NewRegister(s.center).DoRegister(ServiceInstance{
+	center, err := NewSingleCenterClient(s.rpcCfg.SeverCenterConfig)
+	if err != nil {
+		panic(err)
+	}
+	NewRegister(center).DoRegister(ServiceInstance{
 		ServiceName: s.rpcCfg.Name,
 		Port:        s.rpcCfg.Port,
 		Weight:      s.rpcCfg.Weight,
@@ -152,10 +168,11 @@ func (s *Server) unRegister() {
 	if !s.rpcCfg.SeverCenterConfig.Enable {
 		return
 	}
-	onceCenter.Do(func() {
-		s.center = NewCenterClient(s.rpcCfg.SeverCenterConfig)
-	})
-	NewRegister(s.center).UnRegister(ServiceInstance{
+	center, err := NewSingleCenterClient(s.rpcCfg.SeverCenterConfig)
+	if err != nil {
+		panic(err)
+	}
+	NewRegister(center).UnRegister(ServiceInstance{
 		ServiceName: s.rpcCfg.Name,
 		Port:        s.rpcCfg.Port,
 		Weight:      s.rpcCfg.Weight,
@@ -178,4 +195,64 @@ func bindingMetrics(metricPath string, metricPort int) {
 }
 func (s *Server) Stop() {
 	s.grpcServer.Stop()
+}
+
+type Client struct {
+	clusterNames string
+	groupName    string
+	schema       string
+	hystrix      HystrixConfigTable
+	tracer       opentracing.Tracer
+}
+
+func NewClient(cfg RpcCfg) *Client {
+	tracer, _ := jaeger.NewTracer(
+		"grpc",
+		jaeger.NewConstSampler(true),
+		jaeger.NewNullReporter(),
+	)
+	return NewClientWithTracer(cfg, tracer)
+
+}
+func NewClientWithTracer(cfg RpcCfg, tracer opentracing.Tracer) *Client {
+	zlog.InitLogger(cfg.IsOnline)
+	center, err := NewSingleCenterClient(cfg.SeverCenterConfig)
+	if err != nil {
+		zlog.S.Errorf("connection discovery center failed,err:%s", err.Error())
+	}
+	resolver.Register(NewResolverBuilder(center))
+	return &Client{
+		clusterNames: cfg.ClusterName,
+		groupName:    cfg.GroupName,
+		schema:       cfg.SeverCenterConfig.ServerCenterName,
+		hystrix:      cfg.Hystrix,
+		tracer:       tracer,
+	}
+
+}
+func (c *Client) GetGrpcClient(serviceName string, options ...grpc.DialOption) (*grpc.ClientConn, error) {
+	return c.GetGrpcClientWithTimeout(serviceName, 3*time.Second, options...)
+}
+func (c *Client) GetGrpcClientWithTimeout(serviceName string, timeout time.Duration, options ...grpc.DialOption) (*grpc.ClientConn, error) {
+	hystrixCfg := c.hystrix[serviceName]
+	if !strings.HasPrefix(serviceName, c.schema+"://") {
+		serviceName = fmt.Sprintf(c.schema+"://"+serviceName+"?cluster=%s&group=%s", c.clusterNames, c.groupName)
+	}
+	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
+	defer cancel()
+	options = append(options,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(
+			otgrpc.OpenTracingClientInterceptor(c.tracer),
+			grpc_zap.UnaryClientInterceptor(zlog.LOGGER),
+			TimeoutInterceptor(timeout),
+			UnaryHystrixClientInterceptor(hystrixCfg),
+		),
+		grpc.WithChainStreamInterceptor(
+			otgrpc.OpenTracingStreamClientInterceptor(c.tracer),
+			grpc_zap.StreamClientInterceptor(zlog.LOGGER),
+		),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
+	)
+	return grpc.DialContext(ctx, serviceName, options...)
 }

@@ -6,24 +6,40 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/clients"
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
+	"github.com/nacos-group/nacos-sdk-go/model"
 	"github.com/nacos-group/nacos-sdk-go/vo"
+	"sync"
+)
+
+var (
+	nacosClient     *NacosClient
+	onceNacosClient = sync.Once{}
 )
 
 type NacosClient struct {
 	nameClient naming_client.INamingClient
 }
 
-func NewNacosClient(clientConfig *constant.ClientConfig, serverConfigs []constant.ServerConfig) *NacosClient {
-	nameClient, err := clients.NewNamingClient(vo.NacosClientParam{
-		ClientConfig:  clientConfig,
-		ServerConfigs: serverConfigs,
-	})
-	if err != nil {
-		panic(errors.New(fmt.Sprintf("create naming client failed, err: %s", err.Error())))
+func NewSingleNacosClient(clientConfig *constant.ClientConfig, serverConfigs []constant.ServerConfig) (*NacosClient, error) {
+	var err error
+	onceNacosClient.Do(
+		func() {
+			var nameClient naming_client.INamingClient
+			nameClient, err = clients.NewNamingClient(vo.NacosClientParam{
+				ClientConfig:  clientConfig,
+				ServerConfigs: serverConfigs,
+			})
+			if err != nil {
+				return
+			}
+			nacosClient = &NacosClient{
+				nameClient: nameClient,
+			}
+		})
+	if err != nil || nacosClient == nil {
+		return nil, errors.New(fmt.Sprintf("create naming client failed, err: %s", err.Error()))
 	}
-	return &NacosClient{
-		nameClient: nameClient,
-	}
+	return nacosClient, nil
 }
 func (n *NacosClient) DoRegister(instance ServiceInstance) error {
 	if isOk, err := n.nameClient.RegisterInstance(vo.RegisterInstanceParam{
@@ -58,4 +74,59 @@ func (n *NacosClient) DeRegister(instance ServiceInstance) error {
 		return errors.New("deregister instance failed")
 	}
 	return nil
+}
+func (n *NacosClient) Subscribe(param *SubscribeParam) error {
+	return n.nameClient.Subscribe(&vo.SubscribeParam{
+		ServiceName: param.ServiceName,
+		Clusters:    param.Clusters,
+		GroupName:   param.GroupName,
+		SubscribeCallback: func(services []model.SubscribeService, err error) {
+			if err != nil {
+				return
+			}
+			var serviceInstances []ServiceInstance
+			for _, service := range services {
+				if service.Healthy && service.Enable {
+					serviceInstances = append(serviceInstances, ServiceInstance{
+						ServiceName: service.ServiceName,
+						Address:     service.Ip,
+						Port:        int(service.Port),
+						Weight:      service.Weight,
+						Metadata:    service.Metadata,
+						ClusterName: service.ClusterName,
+					})
+				}
+			}
+			param.SubscribeCallback(serviceInstances)
+		},
+	})
+}
+func (n *NacosClient) SelectInstances(instance SelectInstancesParam) ([]ServiceInstance, error) {
+	instances, err := n.nameClient.SelectInstances(vo.SelectInstancesParam{
+		Clusters:    instance.Clusters,
+		GroupName:   instance.GroupName,
+		ServiceName: instance.ServiceName,
+		HealthyOnly: instance.HealthyOnly,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var serviceInstances []ServiceInstance
+	for _, m := range instances {
+		if m.Healthy && m.Enable {
+			serviceInstances = append(serviceInstances, ServiceInstance{
+				ServiceName: m.ServiceName,
+				Address:     m.Ip,
+				Port:        int(m.Port),
+				Weight:      m.Weight,
+				Metadata:    m.Metadata,
+				ClusterName: m.ClusterName,
+			})
+		}
+	}
+	return serviceInstances, err
+}
+
+func (n *NacosClient) GetSchema() string {
+	return "nacos"
 }

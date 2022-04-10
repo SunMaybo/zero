@@ -29,7 +29,7 @@ func (t *TokenAuth) RequireTransportSecurity() bool {
 	return t.enableTLS
 }
 
-func UnaryJWTServerInterceptor(secretKey string, filterMethods []RpcMethod) grpc.UnaryServerInterceptor {
+func UnaryJWTServerInterceptor(secretKey string, filterMethods ...RpcMethod) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		for _, method := range filterMethods {
 			if strings.HasSuffix(info.FullMethod, string(method)) {
