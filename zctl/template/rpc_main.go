@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"github.com/SunMaybo/zero/common/zcfg"
 	"github.com/SunMaybo/zero/common/zrpc"
-	"{{.Project}}/proto/{{.Module}}/{{.PackageName}}"
+	"{{.Project}}/proto/{{.ServiceType}}/{{.Module}}/{{.PackageName}}"
 	"{{.Project}}/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/config"
 	"{{.Project}}/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/server"
 	"{{.Project}}/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/svc"
@@ -18,11 +18,10 @@ var cfgPath = flag.String("cfg", "etc/config.yaml", "cfg path")
 func main() {
 	flag.Parse()
 	cfg := zcfg.LoadConfig[config.Config](*cfgPath)
-	s := zrpc.NewServer(cfg.Rpc, []grpc.UnaryServerInterceptor{
-		//zrpc.UnaryJWTServerInterceptor("", []zrpc.RpcMethod{
-		//	greeter.Rpc_SayStream,
-		//}),
-	}, nil)
+		//jwtInterceptor:=grpc.ChainUnaryInterceptor(
+	//	zrpc.UnaryJWTServerInterceptor(""),
+	//))
+	s := zrpc.NewServer(cfg.Rpc)
 	defer s.Stop()
 	s.RegisterServer(func(s *grpc.Server) error {
 		serviceContext := svc.NewServiceContext(cfg)

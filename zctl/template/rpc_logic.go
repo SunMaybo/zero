@@ -7,7 +7,7 @@ import (
 	"context"
 	"go.uber.org/zap"
 	"github.com/SunMaybo/zero/common/zlog"
-	"{{.Project}}/proto/{{.Module}}/{{.PackageName}}"
+	"{{.Project}}/proto/{{.ServiceType}}/{{.Module}}/{{.PackageName}}"
 	"{{.Project}}/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/svc"
 )
 

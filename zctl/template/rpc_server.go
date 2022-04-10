@@ -4,7 +4,7 @@ const RPCServerTemplate = `package server
 
 import (
 	"context"
-	"{{.Project}}/proto/{{.Module}}/{{.PackageName}}"
+	"{{.Project}}/proto/{{.ServiceType}}/{{.Module}}/{{.PackageName}}"
 	"{{.Project}}/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/logic"
 	"{{.Project}}/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/svc"
 )

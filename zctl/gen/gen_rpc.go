@@ -38,10 +38,10 @@ func NewRpcBuilder(project, projectPath, module, serviceType string) *RpcBuilder
 	}
 }
 func (r *RpcBuilder) StartBuild() {
-	filepath.Walk(r.projectPath+"/proto/"+r.module, func(path string, info fs.FileInfo, err error) error {
+	filepath.Walk(r.projectPath+"/proto/"+r.serviceType+"/"+r.module, func(path string, info fs.FileInfo, err error) error {
 		if !info.IsDir() && strings.HasSuffix(info.Name(), "proto") {
 			//protoc  --go_out=proto/test_services  proto/$(services)/greeter.proto
-			_, err := Run(fmt.Sprintf("protoc -I=%s %s --go_out=%s --go-grpc_out=%s", r.projectPath+"/proto/", path, r.projectPath+"/proto/"+r.module, r.projectPath+"/proto/"+r.module), r.projectPath+"/proto/"+r.module)
+			_, err := Run(fmt.Sprintf("protoc -I=%s %s --go_out=%s --go-grpc_out=%s", r.projectPath+"/proto/", path, r.projectPath+"/proto/"+r.serviceType+"/"+r.module, r.projectPath+"/proto/"+r.serviceType+"/"+r.module), r.projectPath+"/proto/"+r.serviceType+"/"+r.module)
 			if err != nil {
 				panic(err)
 			}
@@ -54,7 +54,17 @@ func (r *RpcBuilder) StartBuild() {
 				os.MkdirAll(r.projectPath+"/"+r.serviceType+"/"+r.module+"/"+rpcMetadata.PackageName+"/rpc/logic", 0777)
 				os.MkdirAll(r.projectPath+"/"+r.serviceType+"/"+r.module+"/"+rpcMetadata.PackageName+"/rpc/server", 0777)
 				os.MkdirAll(r.projectPath+"/"+r.serviceType+"/"+r.module+"/"+rpcMetadata.PackageName+"/rpc/svc", 0777)
-				_, err = Run(fmt.Sprintf("protoc-go-inject-tag -input=%s", r.projectPath+"/proto/"+r.module+"/"+rpcMetadata.PackageName+"/"+rpcMetadata.PackageName+".pb.go"), r.projectPath+"/proto/"+r.module+"/"+rpcMetadata.PackageName)
+				os.MkdirAll(r.projectPath+"/"+r.serviceType+"/"+r.module+"/"+rpcMetadata.PackageName+"/rpc/svc", 0777)
+				os.MkdirAll(r.projectPath+"/docs/"+r.serviceType+"/"+r.module+"/"+rpcMetadata.PackageName, 0777)
+				_, err = Run(fmt.Sprintf("protoc-go-inject-tag -input=%s", r.projectPath+"/proto/"+r.serviceType+"/"+r.module+"/"+rpcMetadata.PackageName+"/"+rpcMetadata.PackageName+".pb.go"), r.projectPath+"/proto/"+r.serviceType+"/"+r.module+"/"+rpcMetadata.PackageName)
+				if err != nil {
+					panic(err)
+				}
+				_, err = Run(fmt.Sprintf("protoc --doc_out=%s --doc_opt=html,index.html *.proto", r.projectPath+"/docs/"+r.serviceType+"/"+r.module+"/"+rpcMetadata.PackageName), r.projectPath+"/proto/"+r.serviceType+"/"+r.module)
+				if err != nil {
+					panic(err)
+				}
+				_, err = Run(fmt.Sprintf("protoc --doc_out=%s --doc_opt=markdown,index.md *.proto", r.projectPath+"/docs/"+r.serviceType+"/"+r.module+"/"+rpcMetadata.PackageName), r.projectPath+"/proto/"+r.serviceType+"/"+r.module)
 				if err != nil {
 					panic(err)
 				}
@@ -234,7 +244,7 @@ func (r *RpcBuilder) rpcMethod(packageName string, rpcMetadata parser.RpcMetadat
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(r.projectPath+"/proto"+"/"+r.module+"/"+packageName+"/method.go", []byte(result), 0777)
+	return ioutil.WriteFile(r.projectPath+"/proto/"+r.serviceType+"/"+r.module+"/"+packageName+"/method.go", []byte(result), 0777)
 }
 func (r *RpcBuilder) rpcSVC(project, packageName string) error {
 	result, err := template.Parser(template.RPCSvcTemplate, template.SvcTemplateParam{
