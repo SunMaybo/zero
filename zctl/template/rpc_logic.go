@@ -4,7 +4,6 @@ const RPCLogicTemplate = `package logic
 
 import (
 	"context"
-	"context"
 	"go.uber.org/zap"
 	"github.com/SunMaybo/zero/common/zlog"
 	"{{.Project}}/proto/{{.ServiceType}}/{{.Module}}/{{.PackageName}}"

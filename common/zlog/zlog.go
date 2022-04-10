@@ -7,6 +7,7 @@ import (
 	"github.com/uber/jaeger-client-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"google.golang.org/grpc/metadata"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -161,6 +162,18 @@ func WithContext(ctx context.Context) *zap.SugaredLogger {
 			return S
 		}
 
+	} else if md, ok := metadata.FromIncomingContext(ctx); ok {
+		traceIds := md.Get("uber-trace-id")
+		if len(traceIds) > 0 {
+			tt := strings.Split(traceIds[0], ":")
+			return S.With(zap.String("span_id", tt[0]), zap.String("trace_id", tt[1]))
+		}
+	} else if md, ok := metadata.FromOutgoingContext(ctx); ok {
+		traceIds := md.Get("uber-trace-id")
+		if len(traceIds) > 0 {
+			tt := strings.Split(traceIds[0], ":")
+			return S.With(zap.String("span_id", tt[0]), zap.String("trace_id", tt[1]))
+		}
 	}
 	return S
 }

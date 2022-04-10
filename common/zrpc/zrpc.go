@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/SunMaybo/zero/common/zlog"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_revovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
@@ -70,16 +69,16 @@ func NewServerWithTracer(cfg RpcCfg, tracer opentracing.Tracer, options ...grpc.
 		cfg.Timeout = 5000
 	}
 	var defaultOptions = []grpc.UnaryServerInterceptor{
-		grpc_zap.UnaryServerInterceptor(zlog.LOGGER),
 		NewValidatorInterceptor().Interceptor,
 		grpc_revovery.UnaryServerInterceptor(),
 		otgrpc.OpenTracingServerInterceptor(tracer),
+		UnaryLoggerServerInterceptor(),
 		UnaryTimeoutInterceptor(time.Duration(cfg.Timeout) * time.Millisecond),
 	}
 	defaultStreamOptions := []grpc.StreamServerInterceptor{
-		grpc_zap.StreamServerInterceptor(zlog.LOGGER),
 		grpc_revovery.StreamServerInterceptor(),
 		otgrpc.OpenTracingStreamServerInterceptor(tracer),
+		StreamLoggerServerInterceptor(),
 		grpc_prometheus.StreamServerInterceptor,
 	}
 	if cfg.EnableMetrics {
@@ -116,19 +115,17 @@ func (s *Server) Start() {
 	//创建监听退出chan
 	signChan := make(chan os.Signal)
 	//监听指定信号 ctrl+c kill
-	signal.Notify(signChan, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
+	signal.Notify(signChan, os.Interrupt, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
 	go func() {
 		for sign := range signChan {
 			switch sign {
-			case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
+			case os.Interrupt, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2, syscall.SIGUSR1:
 				logger.Info("receive signal", zap.String("signal", sign.String()))
 				if s.isRegister.Load() {
 					s.unRegister()
 				}
 				//退出
 				os.Exit(0)
-			case syscall.SIGUSR1:
-			case syscall.SIGUSR2:
 			default:
 			}
 		}
@@ -244,13 +241,13 @@ func (c *Client) GetGrpcClientWithTimeout(serviceName string, timeout time.Durat
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainUnaryInterceptor(
 			otgrpc.OpenTracingClientInterceptor(c.tracer),
-			grpc_zap.UnaryClientInterceptor(zlog.LOGGER),
+			UnaryLoggerClientInterceptor(),
 			TimeoutInterceptor(timeout),
 			UnaryHystrixClientInterceptor(hystrixCfg),
 		),
 		grpc.WithChainStreamInterceptor(
 			otgrpc.OpenTracingStreamClientInterceptor(c.tracer),
-			grpc_zap.StreamClientInterceptor(zlog.LOGGER),
+			StreamLoggerClientInterceptor(),
 		),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
 	)
