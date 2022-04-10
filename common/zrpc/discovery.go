@@ -85,8 +85,8 @@ func (r *Resolver) start() {
 			close(r.stopCh)
 			return
 		case wresp := <-rch:
+			r.store = make(map[string]struct{})
 			for _, service := range wresp {
-				r.store = make(map[string]struct{})
 				r.store[service.Address+":"+fmt.Sprintf("%d", service.Port)] = struct{}{}
 			}
 			r.updateTargetState()
@@ -122,8 +122,8 @@ func (r *Resolver) resolveNow() {
 		r.cc.ReportError(errors.Wrap(err, "failed to select instances"))
 		return
 	}
+	r.store = make(map[string]struct{})
 	for _, instance := range instances {
-		r.store = make(map[string]struct{})
 		r.store[instance.Address+":"+fmt.Sprintf("%d", instance.Port)] = struct{}{}
 	}
 	r.updateTargetState()
