@@ -1,8 +1,9 @@
-package zrpc
+package center
 
 import (
 	"errors"
 	"fmt"
+	"github.com/SunMaybo/zero/common/zlog"
 	"github.com/nacos-group/nacos-sdk-go/clients"
 	"github.com/nacos-group/nacos-sdk-go/clients/config_client"
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
@@ -139,14 +140,28 @@ func (n *NacosClient) SelectInstances(instance SelectInstancesParam) ([]ServiceI
 }
 
 func (n *NacosClient) GetConfig(param ConfigParam) (string, error) {
-	return n.configClient.GetConfig(vo.ConfigParam{
+	data, err := n.configClient.GetConfig(vo.ConfigParam{
 		Group:  param.Group,
-		DataId: param.dataId,
+		DataId: param.DataId,
 		Type:   vo.YAML,
-		OnChange: func(namespace, group, dataId, data string) {
-			param.OnChange(namespace, group, dataId, data)
-		},
 	})
+	if data != "" {
+		param.OnChange(param.Group, param.DataId, data)
+	}
+	if err != nil {
+		zlog.S.Warnw("get config failed", "err", err)
+	}
+	if param.Loading {
+		err = n.configClient.ListenConfig(vo.ConfigParam{
+			Group:  param.Group,
+			DataId: param.DataId,
+			Type:   vo.YAML,
+			OnChange: func(namespace, group, dataId, data string) {
+				param.OnChange(param.Group, param.DataId, data)
+			},
+		})
+	}
+	return data, err
 }
 
 func (n *NacosClient) GetSchema() string {

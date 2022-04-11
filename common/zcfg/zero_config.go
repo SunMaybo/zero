@@ -39,7 +39,7 @@ type SeverCenterConfig struct {
 	Password         string         `yaml:"password"`      // the password for nacos auth
 	LogDir           string         `yaml:"log_dir"`       // the directory for log, default is current path
 	LogLevel         string         `yaml:"log_level"`     // the level of log, it's must be debug,info,warn,error, default value is info
-	Enable           bool           `yaml:"enabled"`       // enable or disable the server center
+	Enable           bool           `yaml:"registry"`      // enable or disable registry the server center
 	ServerConfigs    []ServerConfig `yaml:"server"`        // the server configs
 	ServerCenterName string         `yaml:"name"`          // the server center name, default value is Nacos_Server_Center
 }

@@ -1,4 +1,4 @@
-package zrpc
+package center
 
 import (
 	"errors"
@@ -36,10 +36,11 @@ type SelectInstancesParam struct {
 
 type ConfigParam struct {
 	Group    string
-	dataId   string
-	OnChange func(namespace, group, dataId, data string)
+	DataId   string
+	Loading  bool
+	OnChange func(group, dataId, data string)
 }
-type CenterClient interface {
+type Center interface {
 	GetSchema() string
 	DoRegister(instance ServiceInstance) error
 	DeRegister(instance ServiceInstance) error
@@ -48,10 +49,10 @@ type CenterClient interface {
 	GetConfig(param ConfigParam) (string, error)
 }
 type ServerCenterClient struct {
-	client *CenterClient
+	client *Center
 }
 
-func NewSingleCenterClient(cfg *zcfg.SeverCenterConfig) (CenterClient, error) {
+func NewSingleCenterClient(cfg *zcfg.SeverCenterConfig) (Center, error) {
 	if len(cfg.ServerConfigs) <= 0 {
 		return nil, errors.New("server configs is empty")
 	}

@@ -3,13 +3,14 @@ package zrpc
 import (
 	"context"
 	"fmt"
+	"github.com/SunMaybo/zero/common/center"
 	"github.com/SunMaybo/zero/common/zcfg"
 	"github.com/SunMaybo/zero/common/zlog"
+	"github.com/SunMaybo/zero/common/zrpc/interceptor"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_revovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
-	"github.com/nacos-group/nacos-sdk-go/common/logger"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/uber/jaeger-client-go"
@@ -29,11 +30,13 @@ import (
 )
 
 type Server struct {
-	grpcServer *grpc.Server
-	logger     *zap.Logger
-	isRegister *atomic.Bool
-	zeroCfg    zcfg.ZeroConfig
-	tracer     opentracing.Tracer
+	grpcServer   *grpc.Server
+	logger       *zap.Logger
+	isRegister   *atomic.Bool
+	zeroCfg      zcfg.ZeroConfig
+	tracer       opentracing.Tracer
+	center       center.Center
+	configParams []center.ConfigParam
 }
 
 func NewServer(cfg zcfg.ZeroConfig, options ...grpc.ServerOption) *Server {
@@ -53,16 +56,16 @@ func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options
 		cfg.RPC.Timeout = 5000
 	}
 	var defaultOptions = []grpc.UnaryServerInterceptor{
-		NewValidatorInterceptor().Interceptor,
+		interceptor.NewValidatorInterceptor().Interceptor,
 		grpc_revovery.UnaryServerInterceptor(),
 		otgrpc.OpenTracingServerInterceptor(tracer),
-		UnaryLoggerServerInterceptor(),
-		UnaryTimeoutInterceptor(time.Duration(cfg.RPC.Timeout) * time.Millisecond),
+		interceptor.UnaryLoggerServerInterceptor(),
+		interceptor.UnaryTimeoutInterceptor(time.Duration(cfg.RPC.Timeout) * time.Millisecond),
 	}
 	defaultStreamOptions := []grpc.StreamServerInterceptor{
 		grpc_revovery.StreamServerInterceptor(),
 		otgrpc.OpenTracingStreamServerInterceptor(tracer),
-		StreamLoggerServerInterceptor(),
+		interceptor.StreamLoggerServerInterceptor(),
 		grpc_prometheus.StreamServerInterceptor,
 	}
 	if cfg.RPC.EnableMetrics {
@@ -76,13 +79,22 @@ func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options
 	), grpc.StreamInterceptor(
 		grpc_middleware.ChainStreamServer(defaultStreamOptions...),
 	))
+	center, err := center.NewSingleCenterClient(&cfg.SeverCenterConfig)
+	if err != nil {
+		zlog.S.Warnw("create center client failed", "err", err)
+	}
 	return &Server{
 		grpcServer: grpc.NewServer(options...),
 		zeroCfg:    cfg,
 		isRegister: atomic.NewBool(false),
 		logger:     zlog.LOGGER,
 		tracer:     tracer,
+		center:     center,
 	}
+}
+
+func (s *Server) AddConfigListener(configParam ...center.ConfigParam) {
+	s.configParams = append(s.configParams, configParam...)
 }
 
 type RegisterFunc func(s *grpc.Server) error
@@ -104,7 +116,7 @@ func (s *Server) Start() {
 		for sign := range signChan {
 			switch sign {
 			case os.Interrupt, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2, syscall.SIGUSR1:
-				logger.Info("receive signal", zap.String("signal", sign.String()))
+				s.logger.Info("receive signal", zap.String("signal", sign.String()))
 				if s.isRegister.Load() {
 					s.unRegister()
 				}
@@ -114,6 +126,14 @@ func (s *Server) Start() {
 			}
 		}
 	}()
+	//监听配置
+	for _, param := range s.configParams {
+		if s.center != nil {
+			if _, err := s.center.GetConfig(param); err != nil {
+				s.logger.Sugar().Warnw("get config failed", "group", param.Group, "data_id", param.DataId, "err", err)
+			}
+		}
+	}
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.zeroCfg.RPC.Port))
 	if err != nil {
 		s.logger.Fatal("failed to listen", zap.Error(err))
@@ -130,11 +150,7 @@ func (s *Server) register() {
 		return
 	}
 	time.Sleep(3 * time.Second)
-	center, err := NewSingleCenterClient(&s.zeroCfg.SeverCenterConfig)
-	if err != nil {
-		panic(err)
-	}
-	NewRegister(center).DoRegister(ServiceInstance{
+	NewRegister(s.center).DoRegister(center.ServiceInstance{
 		ServiceName: s.zeroCfg.RPC.Name,
 		Port:        s.zeroCfg.RPC.Port,
 		Weight:      s.zeroCfg.RPC.Weight,
@@ -149,11 +165,7 @@ func (s *Server) unRegister() {
 	if !s.zeroCfg.SeverCenterConfig.Enable {
 		return
 	}
-	center, err := NewSingleCenterClient(&s.zeroCfg.SeverCenterConfig)
-	if err != nil {
-		panic(err)
-	}
-	NewRegister(center).UnRegister(ServiceInstance{
+	NewRegister(s.center).UnRegister(center.ServiceInstance{
 		ServiceName: s.zeroCfg.RPC.Name,
 		Port:        s.zeroCfg.RPC.Port,
 		Weight:      s.zeroCfg.RPC.Weight,
@@ -197,7 +209,7 @@ func NewClient(cfg zcfg.ZeroConfig) *Client {
 }
 func NewClientWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer) *Client {
 	zlog.InitLogger(cfg.RPC.IsOnline)
-	center, err := NewSingleCenterClient(&cfg.SeverCenterConfig)
+	center, err := center.NewSingleCenterClient(&cfg.SeverCenterConfig)
 	if err != nil {
 		zlog.S.Errorf("connection discovery center failed,err:%s", err.Error())
 	}
@@ -225,13 +237,13 @@ func (c *Client) GetGrpcClientWithTimeout(serviceName string, timeout time.Durat
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainUnaryInterceptor(
 			otgrpc.OpenTracingClientInterceptor(c.tracer),
-			UnaryLoggerClientInterceptor(),
-			TimeoutInterceptor(timeout),
-			UnaryHystrixClientInterceptor(hystrixCfg),
+			interceptor.UnaryLoggerClientInterceptor(),
+			interceptor.TimeoutInterceptor(timeout),
+			interceptor.UnaryHystrixClientInterceptor(hystrixCfg),
 		),
 		grpc.WithChainStreamInterceptor(
 			otgrpc.OpenTracingStreamClientInterceptor(c.tracer),
-			StreamLoggerClientInterceptor(),
+			interceptor.StreamLoggerClientInterceptor(),
 		),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
 	)

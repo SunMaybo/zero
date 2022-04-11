@@ -2,6 +2,7 @@ package zrpc
 
 import (
 	"fmt"
+	"github.com/SunMaybo/zero/common/center"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/resolver"
 	"strings"
@@ -13,10 +14,10 @@ const (
 )
 
 type ResolverBuilder struct {
-	center CenterClient
+	center center.Center
 }
 
-func NewResolverBuilder(center CenterClient) *ResolverBuilder {
+func NewResolverBuilder(center center.Center) *ResolverBuilder {
 	return &ResolverBuilder{center: center}
 }
 
@@ -38,7 +39,7 @@ func (e *ResolverBuilder) Build(target resolver.Target, cc resolver.ClientConn, 
 func (e *ResolverBuilder) Scheme() string { return e.center.GetSchema() }
 
 type Resolver struct {
-	center CenterClient
+	center center.Center
 	target resolver.Target
 	cc     resolver.ClientConn
 	store  map[string]struct{}
@@ -62,12 +63,12 @@ func (r *Resolver) start() {
 	if groups == "" {
 		groups = "DEFAULT_GROUP"
 	}
-	rch := make(chan []ServiceInstance, 1)
-	err := r.center.Subscribe(&SubscribeParam{
+	rch := make(chan []center.ServiceInstance, 1)
+	err := r.center.Subscribe(&center.SubscribeParam{
 		ServiceName: r.target.URL.Hostname(),
 		Clusters:    strings.Split(strings.TrimSpace(clusters), ","),
 		GroupName:   groups,
-		SubscribeCallback: func(services []ServiceInstance) {
+		SubscribeCallback: func(services []center.ServiceInstance) {
 			rch <- services
 		},
 	})
@@ -112,7 +113,7 @@ func (r *Resolver) resolveNow() {
 	if groups == "" {
 		groups = "DEFAULT_GROUP"
 	}
-	instances, err := r.center.SelectInstances(SelectInstancesParam{
+	instances, err := r.center.SelectInstances(center.SelectInstancesParam{
 		ServiceName: r.target.URL.Hostname(),
 		Clusters:    strings.Split(strings.TrimSpace(clusters), ","),
 		GroupName:   groups,

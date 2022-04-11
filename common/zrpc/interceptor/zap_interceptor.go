@@ -1,4 +1,4 @@
-package zrpc
+package interceptor
 
 import (
 	"context"

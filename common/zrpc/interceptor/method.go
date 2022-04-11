@@ -1,3 +1,3 @@
-package zrpc
+package interceptor
 
 type RpcMethod string
