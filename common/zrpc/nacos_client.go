@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/nacos-group/nacos-sdk-go/clients"
+	"github.com/nacos-group/nacos-sdk-go/clients/config_client"
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/model"
@@ -17,7 +18,8 @@ var (
 )
 
 type NacosClient struct {
-	nameClient naming_client.INamingClient
+	nameClient   naming_client.INamingClient
+	configClient config_client.IConfigClient
 }
 
 func NewSingleNacosClient(clientConfig *constant.ClientConfig, serverConfigs []constant.ServerConfig) (*NacosClient, error) {
@@ -25,6 +27,7 @@ func NewSingleNacosClient(clientConfig *constant.ClientConfig, serverConfigs []c
 	onceNacosClient.Do(
 		func() {
 			var nameClient naming_client.INamingClient
+			var configClient config_client.IConfigClient
 			nameClient, err = clients.NewNamingClient(vo.NacosClientParam{
 				ClientConfig:  clientConfig,
 				ServerConfigs: serverConfigs,
@@ -32,8 +35,16 @@ func NewSingleNacosClient(clientConfig *constant.ClientConfig, serverConfigs []c
 			if err != nil {
 				return
 			}
+			configClient, err = clients.NewConfigClient(vo.NacosClientParam{
+				ClientConfig:  clientConfig,
+				ServerConfigs: serverConfigs,
+			})
+			if err != nil {
+				return
+			}
 			nacosClient = &NacosClient{
-				nameClient: nameClient,
+				nameClient:   nameClient,
+				configClient: configClient,
 			}
 		})
 	if err != nil || nacosClient == nil {
@@ -125,6 +136,17 @@ func (n *NacosClient) SelectInstances(instance SelectInstancesParam) ([]ServiceI
 		}
 	}
 	return serviceInstances, err
+}
+
+func (n *NacosClient) GetConfig(param ConfigParam) (string, error) {
+	return n.configClient.GetConfig(vo.ConfigParam{
+		Group:  param.Group,
+		DataId: param.dataId,
+		Type:   vo.YAML,
+		OnChange: func(namespace, group, dataId, data string) {
+			param.OnChange(namespace, group, dataId, data)
+		},
+	})
 }
 
 func (n *NacosClient) GetSchema() string {

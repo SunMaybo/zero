@@ -68,6 +68,9 @@ func (r *RpcBuilder) StartBuild() {
 				if err != nil {
 					panic(err)
 				}
+				if rpcMetadata.ServiceName == "" {
+					return nil
+				}
 				if err := r.rpcMethod(rpcMetadata.PackageName, rpcMetadata); err != nil {
 					panic(err)
 				}

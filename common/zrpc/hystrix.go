@@ -2,27 +2,18 @@ package zrpc
 
 import (
 	"context"
+	"github.com/SunMaybo/zero/common/zcfg"
 	"github.com/afex/hystrix-go/hystrix"
 	"google.golang.org/grpc"
 	"sync"
 	"time"
 )
 
-type HystrixConfig struct {
-	Timeout                int `yaml:"timeout"`
-	MaxConcurrentRequests  int `yaml:"max_concurrent_requests"`
-	SleepWindow            int `yaml:"sleep_window"`
-	RequestVolumeThreshold int `yaml:"request_volume_threshold"`
-	MaxRetry               int `yaml:"max_retry"`
-	RetryTimeout           int `yaml:"retry_timeout"`
-	ErrorPercentThreshold  int `yaml:"error_percent_threshold"`
-}
-
 var lockMethodHystrix = sync.Mutex{}
 
 var methodHystrixConfigTable = map[string]struct{}{}
 
-func initHystrixConfigCommand(method string, cfg *HystrixConfig) {
+func initHystrixConfigCommand(method string, cfg *zcfg.HystrixConfig) {
 	if _, ok := methodHystrixConfigTable[method]; ok {
 		return
 	}
@@ -49,7 +40,7 @@ func initHystrixConfigCommand(method string, cfg *HystrixConfig) {
 
 }
 
-func UnaryHystrixClientInterceptor(cfg *HystrixConfig) grpc.UnaryClientInterceptor {
+func UnaryHystrixClientInterceptor(cfg *zcfg.HystrixConfig) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		maxRetry := 3
 		retryTimeout := 50 * time.Millisecond

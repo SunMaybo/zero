@@ -21,7 +21,7 @@ func main() {
 		//jwtInterceptor:=grpc.ChainUnaryInterceptor(
 	//	zrpc.UnaryJWTServerInterceptor(""),
 	//))
-	s := zrpc.NewServer(cfg.Rpc)
+	s := zrpc.NewServer(cfg.Zero)
 	defer s.Stop()
 	s.RegisterServer(func(s *grpc.Server) error {
 		serviceContext := svc.NewServiceContext(cfg)

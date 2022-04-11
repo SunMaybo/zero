@@ -3,6 +3,7 @@ package zrpc
 import (
 	"context"
 	"fmt"
+	"github.com/SunMaybo/zero/common/zcfg"
 	"github.com/SunMaybo/zero/common/zlog"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_revovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -27,32 +28,15 @@ import (
 	"time"
 )
 
-type HystrixConfigTable map[string]*HystrixConfig
-type RpcCfg struct {
-	SeverCenterConfig SeverCenterConfig  `yaml:"center"`
-	Hystrix           HystrixConfigTable `yaml:"hystrix"`
-	Name              string             `yaml:"name"`
-	Port              int                `yaml:"port"`
-	Weight            float64            `yaml:"weight"`
-	IsOnline          bool               `yaml:"is_online"`
-	Metadata          map[string]string  `yaml:"metadata"`
-	ClusterName       string             `yaml:"cluster_name"` // the cluster name
-	GroupName         string             `yaml:"group_name"`   // the group name
-	Timeout           int                `yaml:"timeout"`
-	EnableMetrics     bool               `yaml:"enable_metrics"`
-	MetricsPort       int                `yaml:"metrics_port"`
-	MetricsPath       string             `yaml:"metrics_path"`
-}
-
 type Server struct {
 	grpcServer *grpc.Server
 	logger     *zap.Logger
 	isRegister *atomic.Bool
-	rpcCfg     RpcCfg
+	zeroCfg    zcfg.ZeroConfig
 	tracer     opentracing.Tracer
 }
 
-func NewServer(cfg RpcCfg, options ...grpc.ServerOption) *Server {
+func NewServer(cfg zcfg.ZeroConfig, options ...grpc.ServerOption) *Server {
 	tracer, _ := jaeger.NewTracer(
 		"grpc",
 		jaeger.NewConstSampler(true),
@@ -61,19 +45,19 @@ func NewServer(cfg RpcCfg, options ...grpc.ServerOption) *Server {
 	return NewServerWithTracer(cfg, tracer, options...)
 }
 
-func NewServerWithTracer(cfg RpcCfg, tracer opentracing.Tracer, options ...grpc.ServerOption) *Server {
+func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options ...grpc.ServerOption) *Server {
 	// init logger
-	zlog.InitLogger(cfg.IsOnline)
+	zlog.InitLogger(cfg.RPC.IsOnline)
 	// setting grpc server timeout
-	if cfg.Timeout <= 0 {
-		cfg.Timeout = 5000
+	if cfg.RPC.Timeout <= 0 {
+		cfg.RPC.Timeout = 5000
 	}
 	var defaultOptions = []grpc.UnaryServerInterceptor{
 		NewValidatorInterceptor().Interceptor,
 		grpc_revovery.UnaryServerInterceptor(),
 		otgrpc.OpenTracingServerInterceptor(tracer),
 		UnaryLoggerServerInterceptor(),
-		UnaryTimeoutInterceptor(time.Duration(cfg.Timeout) * time.Millisecond),
+		UnaryTimeoutInterceptor(time.Duration(cfg.RPC.Timeout) * time.Millisecond),
 	}
 	defaultStreamOptions := []grpc.StreamServerInterceptor{
 		grpc_revovery.StreamServerInterceptor(),
@@ -81,11 +65,11 @@ func NewServerWithTracer(cfg RpcCfg, tracer opentracing.Tracer, options ...grpc.
 		StreamLoggerServerInterceptor(),
 		grpc_prometheus.StreamServerInterceptor,
 	}
-	if cfg.EnableMetrics {
+	if cfg.RPC.EnableMetrics {
 		defaultOptions = append(defaultOptions, grpc_prometheus.UnaryServerInterceptor)
 		defaultStreamOptions = append(defaultStreamOptions, grpc_prometheus.StreamServerInterceptor)
 		//begin prometheus metrics
-		go bindingMetrics(cfg.MetricsPath, cfg.MetricsPort)
+		go bindingMetrics(cfg.RPC.MetricsPath, cfg.RPC.MetricsPort)
 	}
 	options = append(options, grpc.UnaryInterceptor(
 		grpc_middleware.ChainUnaryServer(defaultOptions...),
@@ -94,7 +78,7 @@ func NewServerWithTracer(cfg RpcCfg, tracer opentracing.Tracer, options ...grpc.
 	))
 	return &Server{
 		grpcServer: grpc.NewServer(options...),
-		rpcCfg:     cfg,
+		zeroCfg:    cfg,
 		isRegister: atomic.NewBool(false),
 		logger:     zlog.LOGGER,
 		tracer:     tracer,
@@ -130,55 +114,55 @@ func (s *Server) Start() {
 			}
 		}
 	}()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.rpcCfg.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.zeroCfg.RPC.Port))
 	if err != nil {
 		s.logger.Fatal("failed to listen", zap.Error(err))
 		return
 	}
-	s.logger.Info("start to serve", zap.String("name", s.rpcCfg.Name), zap.Int("port", s.rpcCfg.Port))
+	s.logger.Info("start to serve", zap.String("name", s.zeroCfg.RPC.Name), zap.Int("port", s.zeroCfg.RPC.Port))
 	if err := s.grpcServer.Serve(lis); err != nil {
 		s.logger.Fatal("failed to serve", zap.Error(err))
 		return
 	}
 }
 func (s *Server) register() {
-	if !s.rpcCfg.SeverCenterConfig.Enable {
+	if !s.zeroCfg.SeverCenterConfig.Enable {
 		return
 	}
 	time.Sleep(3 * time.Second)
-	center, err := NewSingleCenterClient(s.rpcCfg.SeverCenterConfig)
+	center, err := NewSingleCenterClient(&s.zeroCfg.SeverCenterConfig)
 	if err != nil {
 		panic(err)
 	}
 	NewRegister(center).DoRegister(ServiceInstance{
-		ServiceName: s.rpcCfg.Name,
-		Port:        s.rpcCfg.Port,
-		Weight:      s.rpcCfg.Weight,
-		ClusterName: s.rpcCfg.ClusterName,
-		GroupName:   s.rpcCfg.GroupName,
-		Metadata:    s.rpcCfg.Metadata,
+		ServiceName: s.zeroCfg.RPC.Name,
+		Port:        s.zeroCfg.RPC.Port,
+		Weight:      s.zeroCfg.RPC.Weight,
+		ClusterName: s.zeroCfg.RPC.ClusterName,
+		GroupName:   s.zeroCfg.RPC.GroupName,
+		Metadata:    s.zeroCfg.RPC.Metadata,
 	})
 	s.isRegister.Store(true)
-	s.logger.Info("register success", zap.String("name", s.rpcCfg.Name), zap.Int("port", s.rpcCfg.Port))
+	s.logger.Info("register success", zap.String("name", s.zeroCfg.RPC.Name), zap.Int("port", s.zeroCfg.RPC.Port))
 }
 func (s *Server) unRegister() {
-	if !s.rpcCfg.SeverCenterConfig.Enable {
+	if !s.zeroCfg.SeverCenterConfig.Enable {
 		return
 	}
-	center, err := NewSingleCenterClient(s.rpcCfg.SeverCenterConfig)
+	center, err := NewSingleCenterClient(&s.zeroCfg.SeverCenterConfig)
 	if err != nil {
 		panic(err)
 	}
 	NewRegister(center).UnRegister(ServiceInstance{
-		ServiceName: s.rpcCfg.Name,
-		Port:        s.rpcCfg.Port,
-		Weight:      s.rpcCfg.Weight,
-		ClusterName: s.rpcCfg.ClusterName,
-		GroupName:   s.rpcCfg.GroupName,
-		Metadata:    s.rpcCfg.Metadata,
+		ServiceName: s.zeroCfg.RPC.Name,
+		Port:        s.zeroCfg.RPC.Port,
+		Weight:      s.zeroCfg.RPC.Weight,
+		ClusterName: s.zeroCfg.RPC.ClusterName,
+		GroupName:   s.zeroCfg.RPC.GroupName,
+		Metadata:    s.zeroCfg.RPC.Metadata,
 	})
 	s.isRegister.Store(false)
-	s.logger.Info("unregister success", zap.String("name", s.rpcCfg.Name), zap.Int("port", s.rpcCfg.Port))
+	s.logger.Info("unregister success", zap.String("name", s.zeroCfg.RPC.Name), zap.Int("port", s.zeroCfg.RPC.Port))
 }
 func bindingMetrics(metricPath string, metricPort int) {
 	if metricPath == "" {
@@ -198,11 +182,11 @@ type Client struct {
 	clusterNames string
 	groupName    string
 	schema       string
-	hystrix      HystrixConfigTable
+	hystrix      zcfg.HystrixConfigTable
 	tracer       opentracing.Tracer
 }
 
-func NewClient(cfg RpcCfg) *Client {
+func NewClient(cfg zcfg.ZeroConfig) *Client {
 	tracer, _ := jaeger.NewTracer(
 		"grpc",
 		jaeger.NewConstSampler(true),
@@ -211,18 +195,18 @@ func NewClient(cfg RpcCfg) *Client {
 	return NewClientWithTracer(cfg, tracer)
 
 }
-func NewClientWithTracer(cfg RpcCfg, tracer opentracing.Tracer) *Client {
-	zlog.InitLogger(cfg.IsOnline)
-	center, err := NewSingleCenterClient(cfg.SeverCenterConfig)
+func NewClientWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer) *Client {
+	zlog.InitLogger(cfg.RPC.IsOnline)
+	center, err := NewSingleCenterClient(&cfg.SeverCenterConfig)
 	if err != nil {
 		zlog.S.Errorf("connection discovery center failed,err:%s", err.Error())
 	}
 	resolver.Register(NewResolverBuilder(center))
 	return &Client{
-		clusterNames: cfg.ClusterName,
-		groupName:    cfg.GroupName,
+		clusterNames: cfg.RPC.ClusterName,
+		groupName:    cfg.RPC.GroupName,
 		schema:       cfg.SeverCenterConfig.ServerCenterName,
-		hystrix:      cfg.Hystrix,
+		hystrix:      cfg.RPC.Hystrix,
 		tracer:       tracer,
 	}
 
