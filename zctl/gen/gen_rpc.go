@@ -41,7 +41,7 @@ func (r *RpcBuilder) StartBuild() {
 	filepath.Walk(r.projectPath+"/proto/"+r.serviceType+"/"+r.module, func(path string, info fs.FileInfo, err error) error {
 		if !info.IsDir() && strings.HasSuffix(info.Name(), "proto") {
 			//protoc  --go_out=proto/test_services  proto/$(services)/greeter.proto
-			_, err := Run(fmt.Sprintf("protoc -I=%s %s --go_out=%s --go-grpc_out=%s", r.projectPath+"/proto/", path, r.projectPath+"/proto/"+r.serviceType+"/"+r.module, r.projectPath+"/proto/"+r.serviceType+"/"+r.module), r.projectPath+"/proto/"+r.serviceType+"/"+r.module)
+			_, err := Run(fmt.Sprintf("protoc -I=%s -I=%s %s --go_out=%s --go-grpc_out=%s", "/usr/local/include", r.projectPath+"/proto/"+r.serviceType+"/"+r.module, path, r.projectPath+"/proto/"+r.serviceType+"/"+r.module, r.projectPath+"/proto/"+r.serviceType+"/"+r.module), r.projectPath+"/proto/"+r.serviceType+"/"+r.module)
 			if err != nil {
 				panic(err)
 			}

@@ -157,7 +157,7 @@ func WithContext(ctx context.Context) *zap.SugaredLogger {
 		switch span.Context().(type) {
 		case jaeger.SpanContext:
 			span := span.Context().(jaeger.SpanContext)
-			return S.With(zap.String("span_id", span.SpanID().String()), zap.String("trace_id", span.TraceID().String()))
+			return S.With(zap.String("parent_id", span.ParentID().String()), zap.String("span_id", span.SpanID().String()), zap.String("trace_id", span.TraceID().String()))
 		default:
 			return S
 		}
@@ -166,13 +166,13 @@ func WithContext(ctx context.Context) *zap.SugaredLogger {
 		traceIds := md.Get("uber-trace-id")
 		if len(traceIds) > 0 {
 			tt := strings.Split(traceIds[0], ":")
-			return S.With(zap.String("span_id", tt[0]), zap.String("trace_id", tt[1]))
+			return S.With(zap.String("parent_id", tt[2]), zap.String("span_id", tt[0]), zap.String("trace_id", tt[1]))
 		}
 	} else if md, ok := metadata.FromOutgoingContext(ctx); ok {
 		traceIds := md.Get("uber-trace-id")
 		if len(traceIds) > 0 {
 			tt := strings.Split(traceIds[0], ":")
-			return S.With(zap.String("span_id", tt[0]), zap.String("trace_id", tt[1]))
+			return S.With(zap.String("parent_id", tt[2]), zap.String("span_id", tt[0]), zap.String("trace_id", tt[1]))
 		}
 	}
 	return S

@@ -15,9 +15,9 @@ func UnaryLoggerClientInterceptor() grpc.UnaryClientInterceptor {
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		logger := zlog.WithContext(ctx)
 		if err != nil {
-			logger.Errorw("grpc call error", zap.String("method", method), zap.String("status", "Failed"), zap.String("err", err.Error()), zap.Duration("cost", time.Since(startTime)))
+			logger.Errorw("grpc client unary call error", zap.String("method", method), zap.String("status", "Failed"), zap.String("err", err.Error()), zap.Duration("cost", time.Since(startTime)))
 		} else {
-			logger.Infow("grpc call success", zap.String("method", method), zap.String("status", "Ok"), zap.Duration("cost", time.Since(startTime)))
+			logger.Infow("grpc client unary call success", zap.String("method", method), zap.String("status", "Ok"), zap.Duration("cost", time.Since(startTime)))
 		}
 		return err
 	}
@@ -28,9 +28,9 @@ func StreamLoggerClientInterceptor() grpc.StreamClientInterceptor {
 		clientStream, err := streamer(ctx, desc, cc, method, opts...)
 		logger := zlog.WithContext(ctx)
 		if err != nil {
-			logger.Errorw("grpc call error", zap.String("method", method), zap.String("status", "Failed"), zap.String("err", err.Error()), zap.Duration("cost", time.Since(startTime)))
+			logger.Errorw("grpc client stream call error", zap.String("method", method), zap.String("status", "Failed"), zap.String("err", err.Error()), zap.Duration("cost", time.Since(startTime)))
 		} else {
-			logger.Infow("grpc call success", zap.String("method", method), zap.String("status", "Ok"), zap.Duration("cost", time.Since(startTime)))
+			logger.Infow("grpc client stream call success", zap.String("method", method), zap.String("status", "Ok"), zap.Duration("cost", time.Since(startTime)))
 		}
 		return clientStream, err
 	}
@@ -42,9 +42,9 @@ func UnaryLoggerServerInterceptor() grpc.UnaryServerInterceptor {
 		result, err := handler(ctx, req)
 		logger := zlog.WithContext(ctx)
 		if err != nil {
-			logger.Errorw("grpc call error", zap.String("method", info.FullMethod), zap.String("status", "Failed"), zap.String("err", err.Error()), zap.Duration("cost", time.Since(startTime)))
+			logger.Errorw("grpc unary call error", zap.String("method", info.FullMethod), zap.String("status", "Failed"), zap.String("err", err.Error()), zap.Duration("cost", time.Since(startTime)))
 		} else {
-			logger.Infow("grpc call success", zap.String("method", info.FullMethod), zap.String("status", "Ok"), zap.Duration("cost", time.Since(startTime)))
+			logger.Infow("grpc unary call success", zap.String("method", info.FullMethod), zap.String("status", "Ok"), zap.Duration("cost", time.Since(startTime)))
 		}
 		return result, err
 	}
@@ -55,9 +55,9 @@ func StreamLoggerServerInterceptor() grpc.StreamServerInterceptor {
 		err := handler(srv, stream)
 		logger := zlog.WithContext(stream.Context())
 		if err != nil {
-			logger.Errorw("grpc call error", zap.String("method", info.FullMethod), zap.String("status", "Failed"), zap.String("err", err.Error()), zap.Duration("cost", time.Since(startTime)))
+			logger.Errorw("grpc stream call error", zap.String("method", info.FullMethod), zap.String("status", "Failed"), zap.String("err", err.Error()), zap.Duration("cost", time.Since(startTime)))
 		} else {
-			logger.Infow("grpc call success", zap.String("method", info.FullMethod), zap.String("status", "Ok"), zap.Duration("cost", time.Since(startTime)))
+			logger.Infow("grpc stream call success", zap.String("method", info.FullMethod), zap.String("status", "Ok"), zap.Duration("cost", time.Since(startTime)))
 		}
 		return err
 	}
