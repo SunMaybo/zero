@@ -53,15 +53,22 @@ func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options
 		cfg.RPC.Timeout = 5000
 	}
 	var defaultOptions = []grpc.UnaryServerInterceptor{
-		grpc_revovery.UnaryServerInterceptor(),
-		interceptor.NewValidatorInterceptor().Interceptor,
 		otgrpc.OpenTracingServerInterceptor(tracer),
+		grpc_revovery.UnaryServerInterceptor(grpc_revovery.WithRecoveryHandlerContext(func(ctx context.Context, p interface{}) (err error) {
+			zlog.WithContext(ctx).Errorf("err:%s", p)
+			return nil
+		})),
+		interceptor.NewValidatorInterceptor().Interceptor,
 		interceptor.UnaryLoggerServerInterceptor(),
 		interceptor.UnaryTimeoutInterceptor(time.Duration(cfg.RPC.Timeout) * time.Millisecond),
 	}
 	defaultStreamOptions := []grpc.StreamServerInterceptor{
-		grpc_revovery.StreamServerInterceptor(),
 		otgrpc.OpenTracingStreamServerInterceptor(tracer),
+		grpc_revovery.StreamServerInterceptor(grpc_revovery.WithRecoveryHandlerContext(func(ctx context.Context, p interface{}) (err error) {
+			zlog.WithContext(ctx).Errorf("err:%s", p)
+			return nil
+		})),
+		grpc_revovery.StreamServerInterceptor(),
 		interceptor.StreamLoggerServerInterceptor(),
 		grpc_prometheus.StreamServerInterceptor,
 	}
