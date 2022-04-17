@@ -12,8 +12,9 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/opentracing/opentracing-go"
+	zipkinot "github.com/openzipkin-contrib/zipkin-go-opentracing"
+	"github.com/openzipkin/zipkin-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/uber/jaeger-client-go"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -40,12 +41,8 @@ type Server struct {
 }
 
 func NewServer(cfg zcfg.ZeroConfig, options ...grpc.ServerOption) *Server {
-	tracer, _ := jaeger.NewTracer(
-		"grpc",
-		jaeger.NewConstSampler(true),
-		jaeger.NewNullReporter(),
-	)
-	return NewServerWithTracer(cfg, tracer, options...)
+	tarcer, _ := zipkin.NewTracer(nil)
+	return NewServerWithTracer(cfg, zipkinot.Wrap(tarcer), options...)
 }
 
 func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options ...grpc.ServerOption) *Server {
@@ -56,8 +53,8 @@ func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options
 		cfg.RPC.Timeout = 5000
 	}
 	var defaultOptions = []grpc.UnaryServerInterceptor{
-		interceptor.NewValidatorInterceptor().Interceptor,
 		grpc_revovery.UnaryServerInterceptor(),
+		interceptor.NewValidatorInterceptor().Interceptor,
 		otgrpc.OpenTracingServerInterceptor(tracer),
 		interceptor.UnaryLoggerServerInterceptor(),
 		interceptor.UnaryTimeoutInterceptor(time.Duration(cfg.RPC.Timeout) * time.Millisecond),
@@ -74,17 +71,19 @@ func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options
 		//begin prometheus metrics
 		go bindingMetrics(cfg.RPC.MetricsPath, cfg.RPC.MetricsPort)
 	}
-	options = append(options, grpc.UnaryInterceptor(
-		grpc_middleware.ChainUnaryServer(defaultOptions...),
-	), grpc.StreamInterceptor(
-		grpc_middleware.ChainStreamServer(defaultStreamOptions...),
-	))
 	center, err := center.NewSingleCenterClient(&cfg.SeverCenterConfig)
 	if err != nil {
 		zlog.S.Warnw("create center client failed", "err", err)
 	}
+	var allOptions []grpc.ServerOption
+	allOptions = append(allOptions, grpc.UnaryInterceptor(
+		grpc_middleware.ChainUnaryServer(defaultOptions...),
+	), grpc.StreamInterceptor(
+		grpc_middleware.ChainStreamServer(defaultStreamOptions...),
+	))
+	allOptions = append(allOptions, options...)
 	return &Server{
-		grpcServer: grpc.NewServer(options...),
+		grpcServer: grpc.NewServer(allOptions...),
 		zeroCfg:    cfg,
 		isRegister: atomic.NewBool(false),
 		logger:     zlog.LOGGER,
@@ -199,12 +198,8 @@ type Client struct {
 }
 
 func NewClient(cfg zcfg.ZeroConfig) *Client {
-	tracer, _ := jaeger.NewTracer(
-		"grpc",
-		jaeger.NewConstSampler(true),
-		jaeger.NewNullReporter(),
-	)
-	return NewClientWithTracer(cfg, tracer)
+	tarcer, _ := zipkin.NewTracer(nil)
+	return NewClientWithTracer(cfg, zipkinot.Wrap(tarcer))
 
 }
 func NewClientWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer) *Client {

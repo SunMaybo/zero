@@ -37,7 +37,7 @@ type SelectInstancesParam struct {
 type ConfigParam struct {
 	Group    string
 	DataId   string
-	Loading  bool
+	Refresh  bool
 	OnChange func(group, dataId, data string)
 }
 type Center interface {

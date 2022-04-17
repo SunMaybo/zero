@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
+	zipkinot "github.com/openzipkin-contrib/zipkin-go-opentracing"
 	"github.com/uber/jaeger-client-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"google.golang.org/grpc/metadata"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -22,6 +22,12 @@ var LOGGER *zap.Logger
 var S *zap.SugaredLogger
 
 var once = sync.Once{}
+
+func init() {
+	LOGGER = NewLogger(false)
+	zap.ReplaceGlobals(LOGGER)
+	S = LOGGER.Sugar()
+}
 
 func InitLogger(production bool) {
 	once.Do(func() {
@@ -158,22 +164,18 @@ func WithContext(ctx context.Context) *zap.SugaredLogger {
 		case jaeger.SpanContext:
 			span := span.Context().(jaeger.SpanContext)
 			return S.With(zap.String("parent_id", span.ParentID().String()), zap.String("span_id", span.SpanID().String()), zap.String("trace_id", span.TraceID().String()))
+		case zipkinot.SpanContext:
+			span := span.Context().(zipkinot.SpanContext)
+			if span.ParentID != nil {
+				return S.With(zap.String("parent_id", span.ParentID.String()), zap.String("span_id", span.ID.String()), zap.String("trace_id", span.TraceID.String()))
+			} else {
+				return S
+			}
+
 		default:
 			return S
 		}
 
-	} else if md, ok := metadata.FromIncomingContext(ctx); ok {
-		traceIds := md.Get("uber-trace-id")
-		if len(traceIds) > 0 {
-			tt := strings.Split(traceIds[0], ":")
-			return S.With(zap.String("parent_id", tt[2]), zap.String("span_id", tt[0]), zap.String("trace_id", tt[1]))
-		}
-	} else if md, ok := metadata.FromOutgoingContext(ctx); ok {
-		traceIds := md.Get("uber-trace-id")
-		if len(traceIds) > 0 {
-			tt := strings.Split(traceIds[0], ":")
-			return S.With(zap.String("parent_id", tt[2]), zap.String("span_id", tt[0]), zap.String("trace_id", tt[1]))
-		}
 	}
 	return S
 }

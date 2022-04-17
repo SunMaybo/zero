@@ -5,14 +5,13 @@ import (
 	"io/ioutil"
 )
 
-func LoadConfig[T any](filePath string) T {
+func LoadConfig(filePath string, dst interface{}) {
 	buff, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		panic(err)
 	}
-	var obj T
-	if err := yaml.Unmarshal(buff, &obj); err != nil {
+	if err := yaml.Unmarshal(buff, dst); err != nil {
 		panic(err)
 	}
-	return obj
+	return
 }

@@ -17,7 +17,8 @@ var cfgPath = flag.String("cfg", "etc/config.yaml", "cfg path")
 
 func main() {
 	flag.Parse()
-	cfg := zcfg.LoadConfig[config.Config](*cfgPath)
+	cfg := config.Config{}
+	zcfg.LoadConfig(*cfgPath, &cfg)
 		//jwtInterceptor:=grpc.ChainUnaryInterceptor(
 	//	zrpc.UnaryJWTServerInterceptor(""),
 	//))

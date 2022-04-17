@@ -7,9 +7,10 @@ import (
 )
 
 type RpcMetadata struct {
-	PackageName string
-	ServiceName string
-	MethodSigns []MethodSign
+	PackageName     string
+	JavaPackageName string
+	ServiceName     string
+	MethodSigns     []MethodSign
 }
 type MethodSign struct {
 	Name                string
@@ -37,6 +38,15 @@ func Parser(filePath string) (RpcMetadata, error) {
 				}
 				md.PackageName = strings.ReplaceAll(item[start+1:end], "proto/", "")
 				md.PackageName = strings.ReplaceAll(md.PackageName, "/", "")
+			}
+			//解析java包名
+			if strings.Contains(item, "java_package") {
+				end := strings.LastIndex(item, "\"")
+				start := strings.Index(item, "\"")
+				if start >= end || start < 0 {
+					panic(errors.New("proto is not exist java_package,file:" + filePath))
+				}
+				md.JavaPackageName = item[start+1 : end]
 			}
 			//解析服务名称
 			if strings.HasPrefix(strings.TrimSpace(item), "service") {

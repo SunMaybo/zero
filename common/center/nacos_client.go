@@ -151,7 +151,7 @@ func (n *NacosClient) GetConfig(param ConfigParam) (string, error) {
 	if err != nil {
 		zlog.S.Warnw("get config failed", "err", err)
 	}
-	if param.Loading {
+	if param.Refresh {
 		err = n.configClient.ListenConfig(vo.ConfigParam{
 			Group:  param.Group,
 			DataId: param.DataId,
