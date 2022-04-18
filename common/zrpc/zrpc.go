@@ -55,7 +55,7 @@ func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options
 	var defaultOptions = []grpc.UnaryServerInterceptor{
 		otgrpc.OpenTracingServerInterceptor(tracer),
 		grpc_revovery.UnaryServerInterceptor(grpc_revovery.WithRecoveryHandlerContext(func(ctx context.Context, p interface{}) (err error) {
-			zlog.WithContext(ctx).Errorf("err:%s", p)
+			zlog.WithContext(ctx).Error(p)
 			return nil
 		})),
 		interceptor.NewValidatorInterceptor().Interceptor,
@@ -65,7 +65,7 @@ func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options
 	defaultStreamOptions := []grpc.StreamServerInterceptor{
 		otgrpc.OpenTracingStreamServerInterceptor(tracer),
 		grpc_revovery.StreamServerInterceptor(grpc_revovery.WithRecoveryHandlerContext(func(ctx context.Context, p interface{}) (err error) {
-			zlog.WithContext(ctx).Errorf("err:%s", p)
+			zlog.WithContext(ctx).Error(p)
 			return nil
 		})),
 		grpc_revovery.StreamServerInterceptor(),
@@ -78,7 +78,7 @@ func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options
 		//begin prometheus metrics
 		go bindingMetrics(cfg.RPC.MetricsPath, cfg.RPC.MetricsPort)
 	}
-	center, err := center.NewSingleCenterClient(&cfg.SeverCenterConfig)
+	center, err := center.NewSingleCenterClient(cfg.SeverCenterConfig)
 	if err != nil {
 		zlog.S.Warnw("create center client failed", "err", err)
 	}
@@ -211,7 +211,7 @@ func NewClient(cfg zcfg.ZeroConfig) *Client {
 }
 func NewClientWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer) *Client {
 	zlog.InitLogger(cfg.RPC.IsOnline)
-	center, err := center.NewSingleCenterClient(&cfg.SeverCenterConfig)
+	center, err := center.NewSingleCenterClient(cfg.SeverCenterConfig)
 	if err != nil {
 		zlog.S.Errorf("connection discovery center failed,err:%s", err.Error())
 	}

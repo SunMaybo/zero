@@ -4,8 +4,11 @@ import (
 	"github.com/SunMaybo/zero/common/zlog"
 	"github.com/SunMaybo/zero/zctl/cmd"
 	"github.com/SunMaybo/zero/zctl/file"
+	"github.com/SunMaybo/zero/zctl/parser"
 	"github.com/SunMaybo/zero/zctl/template"
+	"io/fs"
 	"os"
+	"path/filepath"
 )
 
 func JavaGrpcParentProject(project, groupId, artifactId, version string) {
@@ -69,10 +72,36 @@ func javaGrpcPom(project, groupId, artifactId, version string) (string, error) {
 	}
 	return result, nil
 }
+func javaGrpcImpl(packageFile, javaGrpcFilePath string) error {
+	serviceSign := parser.ParserJavaGrpc(javaGrpcFilePath)
+	if len(serviceSign.MethodSigns) <= 0 {
+		return nil
+	}
+	result, err := template.Parser(template.JavaRPCImplPattern, serviceSign)
+	if err != nil {
+		return err
+	}
+	if err := file.WriterFile(file.GetFilePath(packageFile, "/"+serviceSign.ServiceName+".java"), []byte(result)); err != nil {
+		zlog.S.Errorw("generate java grpc impl error", "err", err)
+		os.Exit(-1)
+	}
+	return nil
+}
 func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altDeploymentRepository, workDir string) {
 	result, err := cmd.JavaProtoExecute(workDir, protoProjectDir)
 	if err != nil {
 		zlog.S.Errorw("protoc gen java grpc error", "err", err)
+		os.Exit(-1)
+	}
+	err = filepath.Walk(protoProjectDir, func(path string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		return javaGrpcImpl(protoProjectDir, path)
+	})
+
+	if err != nil {
+		zlog.S.Errorw("generate java grpc impl error", "err", err)
 		os.Exit(-1)
 	}
 	zlog.S.Infow("protoc gen java grpc success", "result", result)

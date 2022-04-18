@@ -74,9 +74,9 @@ func NewLogger(production bool) *zap.Logger {
 		return logger
 	}
 }
-func GinLogger(production bool) gin.HandlerFunc {
-	logger := NewLogger(production)
+func GinLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		logger := WithContext(c)
 		t := time.Now()
 		c.Next()
 		latency := time.Since(t).String()
@@ -123,10 +123,11 @@ func GinLogger(production bool) gin.HandlerFunc {
 		}
 	}
 }
-func RecoveryWithZap(production bool) gin.HandlerFunc {
-	logger := NewLogger(production)
+func RecoveryWithZap() gin.HandlerFunc {
+
 	return func(c *gin.Context) {
 		defer func() {
+			logger := WithContext(c)
 			if err := recover(); err != nil {
 				var brokenPipe bool
 				if ne, ok := err.(*net.OpError); ok {

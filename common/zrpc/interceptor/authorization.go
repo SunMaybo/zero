@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/SunMaybo/zero/common/jwt"
+	"github.com/SunMaybo/zero/common/zlog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"strings"
@@ -41,9 +42,11 @@ func UnaryJWTServerInterceptor(secretKey string, filterMethods ...RpcMethod) grp
 			return nil, errors.New("no metadata")
 		}
 		if md["authorization"] == nil || len(md["authorization"]) <= 0 {
+			zlog.WithContext(ctx).Error("no authorization")
 			return nil, errors.New("no metadata")
 		}
 		if payload, err := jwt.NewParseToken(secretKey).Verify(md["authorization"][0]); err != nil {
+			zlog.WithContext(ctx).Error("verify token error", err)
 			return nil, err
 		} else {
 			ctx = context.WithValue(ctx, "payload", payload)

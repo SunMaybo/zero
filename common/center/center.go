@@ -52,7 +52,7 @@ type ServerCenterClient struct {
 	client *Center
 }
 
-func NewSingleCenterClient(cfg *zcfg.SeverCenterConfig) (Center, error) {
+func NewSingleCenterClient(cfg zcfg.SeverCenterConfig) (Center, error) {
 	if len(cfg.ServerConfigs) <= 0 {
 		return nil, errors.New("server configs is empty")
 	}

@@ -13,10 +13,13 @@ import (
 	"{{.Project}}/{{.ServiceType}}/{{.Module}}/{{.PackageName}}/rpc/svc"
 )
 
-var cfgPath = flag.String("cfg", "etc/config.yaml", "cfg path")
+var cfgPath = flag.String("cfg", "./etc/config.yaml", "config file path")
+
+func init() {
+	flag.Parse()
+}
 
 func main() {
-	flag.Parse()
 	cfg := config.Config{}
 	zcfg.LoadConfig(*cfgPath, &cfg)
 		//jwtInterceptor:=grpc.ChainUnaryInterceptor(

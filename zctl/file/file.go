@@ -1,6 +1,7 @@
 package file
 
 import (
+	"io/ioutil"
 	"os"
 	"runtime"
 	"strings"
@@ -33,17 +34,7 @@ func WriterFile(filePath string, data []byte) error {
 }
 func ReadFile(filePath string) ([]byte, error) {
 	filePath = getPath(filePath)
-	f, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	data := make([]byte, 1024)
-	n, err := f.Read(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
+	return ioutil.ReadFile(filePath)
 }
 func MkdirAll(dir string) error {
 	dir = getPath(dir)
