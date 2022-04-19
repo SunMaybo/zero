@@ -1,11 +1,11 @@
 # zero
 本项目是一个微服务开发脚手架，旨在快速构建一个跨平台的微服务架构，帮助开发人员提高开发效率。
 ## 设计原则
-1. 兼容各种语言平台，目前支持 `Golang`、`Java`。
-2. 不重复造轮子，选择社区里比较优秀和成熟的开源框架。
-3. 频发和繁重的工作用代码自动生成提高开发效率。
-4.  开源框架集成做到可扩展性。
-5.  统一约定和规范保障项目的风格规范一致。
+1.  兼容各种语言平台，目前支持 `Golang`、`Java`。
+2.  不重复造轮子，选择社区里比较优秀和成熟的开源框架。
+3.  频繁和繁重的工作用代码自动生成提高开发效率。
+4.  开源框架的集成做到可扩展性。
+5.  统一的约定和规范保障项目的风格规范一致。
 
 ## 跨平台兼容
 1. 选择 `Grpc`+`Protobuf` 实现RPC服务调用并做到垮语言兼容。
@@ -24,12 +24,12 @@
 
 ## 安装Protobuff编译环境
 ### 安装工具
-`protoc-3.20.0`
-`protoc-gen-validate-0.6.7`
-`protoc-gen-grpc-java-1.45.1`
-`protoc-gen-doc_1.5.1`
-`protoc-go-inject-tag`
-`protoc-gen-go-grpc`
+`protoc-3.20.0`<br>
+`protoc-gen-validate-0.6.7`<br>
+`protoc-gen-grpc-java-1.45.1`<br>
+`protoc-gen-doc_1.5.1`<br>
+`protoc-go-inject-tag`<br>
+`protoc-gen-go-grpc`<br>
 
 ### 安装命令
 ```
@@ -39,10 +39,10 @@
 
 **温馨提示**：
 1. 你可以通过`--proxy` 指定http_proxy解决下载问题。
-2. golang方式安装会帮助安装好java环境所需要的编译插件。
+2. Golang方式安装会帮助安装好Java环境所需要的编译插件。
 
 ## 快速开始
-### 开启一个Nacos-server
+### 开启一个nacos-server
 ```
 docker run --name nacos-quick -e MODE=standalone -p 8849:8848 -d nacos/nacos-server:2.0.2
 ```
@@ -74,6 +74,8 @@ message HelloReply {
 }
 ```
 ## JAVA项目
+### 演示DEMO
+[asset_platform](https://github.com/SunMaybo/asset_platform)
 ### 生成project 项目
 ```
 zctl java_project --g com.jewel.meta --a asset_platform
@@ -123,6 +125,8 @@ zctl java_grpc_package --p ./proto/greeter_service
 ![img.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img8.png)
 
 ## Golang项目
+### 演示Demo
+[metdata](https://github.com/SunMaybo/metadata)
 ### 创建一个项目
 创建一个目录并创建go.mod文件
 ```
