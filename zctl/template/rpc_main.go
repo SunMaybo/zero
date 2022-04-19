@@ -22,8 +22,8 @@ func init() {
 func main() {
 	cfg := config.Config{}
 	zcfg.LoadConfig(*cfgPath, &cfg)
-		//jwtInterceptor:=grpc.ChainUnaryInterceptor(
-	//	zrpc.UnaryJWTServerInterceptor(""),
+    //jwtInterceptor:=grpc.ChainUnaryInterceptor(
+	//	interceptor.UnaryJWTServerInterceptor("",nil),
 	//))
 	s := zrpc.NewServer(cfg.Zero)
 	defer s.Stop()
