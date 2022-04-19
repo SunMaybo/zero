@@ -154,10 +154,12 @@ func init() {
 		"",
 		"alt deployment repository")
 
-	proxy = genGrpcCommand.Flags().String("proxy", "", "proxy")
-	installLang = genGrpcCommand.Flags().String("lang", "java", "install language")
+	proxy = installCommand.Flags().String("proxy", "", "proxy")
+	installLang = installCommand.Flags().String("lang", "java", "install language")
+
 	golangModule = golangModuleCommand.Flags().String("m", "greeter", "golang module")
 	golangServiceType = golangModuleCommand.Flags().String("t", "services", "golang service type")
+
 	maven = genGrpcCommand.Flags().String("maven", "", "maven path")
 
 	docSource = genDocCommand.Flags().String("s", "", "doc source")
