@@ -10,17 +10,17 @@
   - [快速开始](#%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B)
     - [开启一个nacos-server](#%E5%BC%80%E5%90%AF%E4%B8%80%E4%B8%AAnacos-server)
     - [`greeter.proto`](#greeterproto)
-  - [JAVA项目](#java%E9%A1%B9%E7%9B%AE)
-    - [演示DEMO](#%E6%BC%94%E7%A4%BAdemo)
-    - [生成project 项目](#%E7%94%9F%E6%88%90project-%E9%A1%B9%E7%9B%AE)
-    - [生成 Grpc+Protobuf Maven依赖包](#%E7%94%9F%E6%88%90-grpcprotobuf-maven%E4%BE%9D%E8%B5%96%E5%8C%85)
-    - [创建一个GRPC服务greeter-service](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAgrpc%E6%9C%8D%E5%8A%A1greeter-service)
-    - [创建一个调用服务greeter-api](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E8%B0%83%E7%94%A8%E6%9C%8D%E5%8A%A1greeter-api)
-  - [GOLANG项目](#golang%E9%A1%B9%E7%9B%AE)
-    - [演示Demo](#%E6%BC%94%E7%A4%BAdemo)
-    - [创建一个项目](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E9%A1%B9%E7%9B%AE)
-    - [proto文件管理](#proto%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86)
-    - [生成greeter-service服务](#%E7%94%9F%E6%88%90greeter-service%E6%9C%8D%E5%8A%A1)
+    - [JAVA项目](#java%E9%A1%B9%E7%9B%AE)
+      - [演示DEMO](#%E6%BC%94%E7%A4%BAdemo)
+      - [生成project 项目](#%E7%94%9F%E6%88%90project-%E9%A1%B9%E7%9B%AE)
+      - [生成 Grpc+Protobuf Maven依赖包](#%E7%94%9F%E6%88%90-grpcprotobuf-maven%E4%BE%9D%E8%B5%96%E5%8C%85)
+      - [创建一个GRPC服务greeter-service](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAgrpc%E6%9C%8D%E5%8A%A1greeter-service)
+      - [创建一个调用服务greeter-api](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E8%B0%83%E7%94%A8%E6%9C%8D%E5%8A%A1greeter-api)
+    - [GOLANG项目](#golang%E9%A1%B9%E7%9B%AE)
+      - [演示Demo](#%E6%BC%94%E7%A4%BAdemo)
+      - [创建一个项目](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E9%A1%B9%E7%9B%AE)
+      - [proto文件管理](#proto%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86)
+      - [生成greeter-service服务](#%E7%94%9F%E6%88%90greeter-service%E6%9C%8D%E5%8A%A1)
   - [项目结构](#%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84)
     - [JAVA项目结构](#java%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84)
     - [GOLANG项目结构](#golang%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84)
@@ -44,7 +44,6 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # zero
-
 本项目是一个微服务开发脚手架，旨在快速构建一个跨平台的微服务架构，帮助开发人员提高开发效率。
 
 ## 设计原则
@@ -136,13 +135,13 @@ message HelloReply {
 }
 ```
 
-## JAVA项目
+### JAVA项目
 
-### 演示DEMO
+#### 演示DEMO
 
 [asset_platform](https://github.com/SunMaybo/asset_platform)
 
-### 生成project 项目
+#### 生成project 项目
 
 ```
 zctl java_project --g com.jewel.meta --a asset_platform
@@ -150,7 +149,7 @@ zctl java_project --g com.jewel.meta --a asset_platform
 
 ![img.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img2.png)
 
-### 生成 Grpc+Protobuf Maven依赖包
+#### 生成 Grpc+Protobuf Maven依赖包
 
 ```
 zctl java_grpc_package --p ./proto/greeter_service
@@ -165,7 +164,7 @@ zctl java_grpc_package --p ./proto/greeter_service
 3. 你可以通过`--v` 指定当前包的版本。
 4. 你也可以在`$Home/.zctl/config.yaml `下指定这些配置。
 
-### 创建一个GRPC服务greeter-service
+#### 创建一个GRPC服务greeter-service
 
 引入依赖
 
@@ -184,7 +183,7 @@ zctl java_grpc_package --p ./proto/greeter_service
 ![img_2.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img6.png)
 ![img_3.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img7.png)
 
-### 创建一个调用服务greeter-api
+#### 创建一个调用服务greeter-api
 
 引入依赖
 
@@ -200,13 +199,13 @@ zctl java_grpc_package --p ./proto/greeter_service
 
 ![img.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img8.png)
 
-## GOLANG项目
+### GOLANG项目
 
-### 演示Demo
+#### 演示Demo
 
 [metdata](https://github.com/SunMaybo/metadata)
 
-### 创建一个项目
+#### 创建一个项目
 
 创建一个目录并创建go.mod文件
 
@@ -216,11 +215,11 @@ module github.com/SunMaybo/metadata
 
 ![img_2.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img_2.png)
 
-### proto文件管理
+#### proto文件管理
 
 ![img.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img9.png)
 
-### 生成greeter-service服务
+#### 生成greeter-service服务
 
 ```
 /zctl golang_module --m asset_platform --t services
