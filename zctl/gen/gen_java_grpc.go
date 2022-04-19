@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func JavaGrpcParentProject(project, groupId, artifactId, version string) {
@@ -81,7 +82,8 @@ func javaGrpcImpl(packageFile, javaGrpcFilePath string) error {
 	if err != nil {
 		return err
 	}
-	if err := file.WriterFile(file.GetFilePath(packageFile, "/"+serviceSign.ServiceName+".java"), []byte(result)); err != nil {
+
+	if err := file.WriterFile(file.GetFilePath(packageFile, "/src/main/java/"+strings.ReplaceAll(serviceSign.PackageName, ".", "/")+"/"+serviceSign.ServiceName+".java"), []byte(result)); err != nil {
 		zlog.S.Errorw("generate java grpc impl error", "err", err)
 		os.Exit(-1)
 	}

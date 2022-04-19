@@ -1,9 +1,9 @@
 package template
 
 var ProjectMaven = `<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="zapi://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="zapi://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="zapi://maven.apache.org/POM/4.0.0 zapi://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,7 +14,6 @@ var ProjectMaven = `<?xml version="1.0" encoding="UTF-8"?>
     <version>0.0.1-SNAPSHOT</version>
 
     <modules>
-        <module>proto</module>
     </modules>
 
     <properties>
@@ -104,8 +103,8 @@ var ProjectMaven = `<?xml version="1.0" encoding="UTF-8"?>
 </project>`
 
 var ProtoMaven = `<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="zapi://maven.apache.org/POM/4.0.0" xmlns:xsi="zapi://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="zapi://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="zapi://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
     <groupId>{{.GroupId}}</groupId>

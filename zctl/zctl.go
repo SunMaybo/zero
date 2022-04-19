@@ -34,7 +34,7 @@ func main() {
 func genConfig(path string) {
 	cfg := config.Config{
 		Maven:                     "/usr/local/maven/bin/mvn",
-		MavenDeploymentRepository: "releases-snapshots::default::zapi://nexus.tongdao.cn/nexus/content/repositories/releases-snapshots/",
+		MavenDeploymentRepository: "",
 		MavenSettings:             file.GetFilePath(getHomeDir(), "/.m2/settings.xml"),
 	}
 	buff, _ := yaml.Marshal(&cfg)

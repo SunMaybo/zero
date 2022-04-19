@@ -160,7 +160,7 @@ func init() {
 	golangModule = golangModuleCommand.Flags().String("m", "greeter", "golang module")
 	golangServiceType = golangModuleCommand.Flags().String("t", "services", "golang service type")
 
-	maven = genGrpcCommand.Flags().String("maven", "", "maven path")
+	maven = genGrpcCommand.Flags().String("m", "", "maven exec path")
 
 	docSource = genDocCommand.Flags().String("s", "", "doc source")
 	docType = genDocCommand.Flags().Int("t", 1, "doc type")

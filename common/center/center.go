@@ -4,6 +4,10 @@ import (
 	"errors"
 	"github.com/SunMaybo/zero/common/zcfg"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
+	"os"
+	"os/user"
+	"runtime"
+	"strings"
 )
 
 const (
@@ -56,6 +60,15 @@ func NewSingleCenterClient(cfg zcfg.SeverCenterConfig) (Center, error) {
 	if len(cfg.ServerConfigs) <= 0 {
 		return nil, errors.New("server configs is empty")
 	}
+	u, _ := user.Current()
+	if cfg.CacheDir == "" && u != nil {
+		cfg.CacheDir = u.HomeDir + "/.nacos/cache"
+	}
+	if cfg.LogDir == "" && u != nil {
+		cfg.LogDir = u.HomeDir + "/.nacos/log"
+	}
+	createDir(cfg.CacheDir)
+	createDir(cfg.LogDir)
 	switch cfg.ServerCenterName {
 	case Nacos_Server_Center_Name:
 		clientConfig := constant.ClientConfig{
@@ -81,4 +94,13 @@ func NewSingleCenterClient(cfg zcfg.SeverCenterConfig) (Center, error) {
 
 	}
 	return nil, errors.New("not support server center name:" + cfg.ServerCenterName)
+}
+func createDir(dir string) {
+	if runtime.GOOS == "windows" {
+		dir = strings.ReplaceAll(dir, "/", "\\")
+	}
+	_, err := os.Stat(dir)
+	if err != nil {
+		os.MkdirAll(dir, 0755)
+	}
 }

@@ -70,7 +70,7 @@ func JavaProtoExecute(workDir, protoProjectDir string) (string, error) {
 		file.GetFilePath(protoProjectDir, "/src/main/java")), workDir)
 }
 func GolangProtoExecute(workDir, protoProjectDir, protoFilePath string) (string, error) {
-	return Run(getProtoc()+fmt.Sprintf(" --plugin=protoc-gen-grpc-go=%s -I=%s -I=%s --go_out=%s --go-grpc_out=%s %s",
+	return Run(getProtoc()+fmt.Sprintf(" --plugin=protoc-gen-go-grpc=%s -I=%s -I=%s --go_out=%s --go-grpc_out=%s %s",
 		getProtoGolangGrpc(),
 		getProtoInclude(),
 		protoProjectDir,

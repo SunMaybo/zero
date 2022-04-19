@@ -1,9 +1,0 @@
-syntax = "proto3";
-package greeter;
-option go_package = "/greeter";
-option java_package = "com.xuhou.middle.proto.test_apis";
-import "validate/validate.proto";
-
-message HelloRequest2 {
-  string name = 1 [(validate.rules).string.len = 5];
-}
