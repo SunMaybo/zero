@@ -20,7 +20,7 @@
 ## 工具安装
 `go install github.com/SunMaybo/zero/zctl@latest`
 
-![img_1.png](img/img.png)
+![img_1.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img.png)
 
 ## 安装Protobuff编译环境
 ### 安装工具
@@ -35,7 +35,7 @@
 ```
   zctl install --lang golang
 ```
-![img.png](img/img1.png)
+![img.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img1.png)
 
 **温馨提示**：
 1. 你可以通过`--proxy` 指定http_proxy解决下载问题。
@@ -78,13 +78,13 @@ message HelloReply {
 ```
 zctl java_project --g com.jewel.meta --a asset_platform
 ```
-![img.png](img/img2.png)
+![img.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img2.png)
 
 ### 生成 Grpc+Protobuf Maven依赖包
 ```
 zctl java_grpc_package --p ./proto/greeter_service
 ```
-![img.png](img/img3.png)
+![img.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img3.png)
 
 `注意`：
 通过指定Maven 的私服的地址依赖包会上传到私服中，其中：
@@ -105,10 +105,10 @@ zctl java_grpc_package --p ./proto/greeter_service
         </dependency>
     </dependencies>
 ```
-![img.png](img/img4.png)
-![img_1.png](img/img5.png)
-![img_2.png](img/img6.png)
-![img_3.png](img/img7.png)
+![img.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img4.png)
+![img_1.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img5.png)
+![img_2.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img6.png)
+![img_3.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img7.png)
 ### 创建一个调用服务greeter-api
 引入依赖
 ```
@@ -120,7 +120,7 @@ zctl java_grpc_package --p ./proto/greeter_service
         </dependency>
     </dependencies>
 ```
-![img.png](img/img8.png)
+![img.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img8.png)
 
 ## Golang项目
 ### 创建一个项目
@@ -128,20 +128,20 @@ zctl java_grpc_package --p ./proto/greeter_service
 ```
 module github.com/SunMaybo/metadata
 ```
-![img_2.png](img/img_2.png)
+![img_2.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img_2.png)
 ### proto文件管理
-![img.png](img/img9.png)
+![img.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img9.png)
 ### 生成greeter-service服务
 ```
 /zctl golang_module --m asset_platform --t services
 ```
-![img_1.png](img/img_1.png)
-![img_3.png](img/img_3.png)
-![img_4.png](img/img_4.png)
+![img_1.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img_1.png)
+![img_3.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img_3.png)
+![img_4.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img_4.png)
 **client**
-![img_5.png](img/img_5.png)
+![img_5.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img_5.png)
 **server**
-![img_6.png](img/img_6.png)
+![img_6.png](https://raw.githubusercontent.com/SunMaybo/zero/develop/img/img_6.png)
 
 ## 项目结构
 ## 数据校验
