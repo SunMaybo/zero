@@ -40,10 +40,10 @@
     - [GOLANG](#golang-2)
     - [JAVA](#java-2)
   - [其它](#%E5%85%B6%E5%AE%83)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
+    - [GOLANG HTTP服务](#golang-http%E6%9C%8D%E5%8A%A1)
+  
 # zero
+
 本项目是一个微服务开发脚手架，旨在快速构建一个跨平台的微服务架构，帮助开发人员提高开发效率。
 
 ## 设计原则
@@ -254,32 +254,32 @@ greeter_api ------> SpringBoot 服务
 
 ```yaml
 common------> 通用代码目录
-proto------> 用于存放proto文件
-services
-asset_platform------> 对应模块或者说项目
+  proto------> 用于存放proto文件
+  services
+  asset_platform------> 对应模块或者说项目
 - greeter.proto
 - common.proto
-apis------> 对外服务的proto文件
-asset_api-----> 对应模块或者说项目
--greeter_api.proto
-apis------> 对外服务可以是open_api,grpc_web,http，websocket等
-asset_api-----> 对应模块或者说项目
+  apis------> 对外服务的proto文件
+  asset_api-----> 对应模块或者说项目
+  -greeter_api.proto
+  apis------> 对外服务可以是open_api,grpc_web,http，websocket等
+  asset_api-----> 对应模块或者说项目
 - greeter_gateway------>对外服务
 - greeter_api
-services------>存放对应的微服务
-asset_platform------> 对应模块或者说项目
+  services------>存放对应的微服务
+  asset_platform------> 对应模块或者说项目
 - greeter------> 具体微服务
-rpc
-etc------>配置文件存放目录
-config------> 配置文件mapping层
-logic------> RPC服务实现层
-svc------>serviceContext 上下文配置
-server-----> GRPC 服务层自动生成
-main.go-----> 启动入口
-tasks----->可以放入一些非接口的任务执行服务
-utils----->通用辅助代码目录
-tools----->通用工具代码
-......
+  rpc
+  etc------>配置文件存放目录
+  config------> 配置文件mapping层
+  logic------> RPC服务实现层
+  svc------>serviceContext 上下文配置
+  server-----> GRPC 服务层自动生成
+  main.go-----> 启动入口
+  tasks----->可以放入一些非接口的任务执行服务
+  utils----->通用辅助代码目录
+  tools----->通用工具代码
+  ......
 
 ```
 
@@ -435,4 +435,11 @@ client,_:=zrpc.NewClient(cfg.Zero).GetGrpcClientWithTimeout(
 
 ## 其它
 
+### GOLANG HTTP服务
+
+通过工具快速创建一个GOLANG的HTTP接口服务
+
+```
+ zctl golang_http_service --m security --s sso_api
+```
 

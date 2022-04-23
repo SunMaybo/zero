@@ -74,54 +74,51 @@ func NewLogger(production bool) *zap.Logger {
 		return logger
 	}
 }
-func GinLogger() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		logger := WithContext(c)
-		t := time.Now()
-		c.Next()
-		latency := time.Since(t).String()
-		clientIP := c.ClientIP()
-		method := c.Request.Method
-		statusCode := c.Writer.Status()
-		path := c.Request.URL.Path
-		query := c.Request.URL.RawQuery
-		switch {
-		case statusCode >= 400 && statusCode <= 499:
-			{
-				logger.Warn("[GIN]",
-					zap.Int("statusCode", statusCode),
-					zap.String("latency", latency),
-					zap.String("clientIP", clientIP),
-					zap.String("method", method),
-					zap.String("path", path),
-					zap.String("error", c.Errors.String()),
-					zap.String("query", query),
-				)
-			}
-		case statusCode >= 500:
-			{
-				logger.Error("[GIN]",
-					zap.Int("statusCode", statusCode),
-					zap.String("latency", latency),
-					zap.String("clientIP", clientIP),
-					zap.String("method", method),
-					zap.String("path", path),
-					zap.String("error", c.Errors.String()),
-					zap.String("query", query),
-				)
-			}
-		default:
-			logger.Info("[GIN]",
+func GinLogger(c context.Context, startTime time.Time, ginCtx *gin.Context) {
+	logger := WithContext(c)
+	latency := time.Since(startTime).String()
+	clientIP := ginCtx.ClientIP()
+	method := ginCtx.Request.Method
+	statusCode := ginCtx.Writer.Status()
+	path := ginCtx.Request.URL.Path
+	query := ginCtx.Request.URL.RawQuery
+	switch {
+	case statusCode >= 400 && statusCode <= 499:
+		{
+			logger.Warn("[GIN]",
 				zap.Int("statusCode", statusCode),
 				zap.String("latency", latency),
 				zap.String("clientIP", clientIP),
 				zap.String("method", method),
 				zap.String("path", path),
-				zap.String("error", c.Errors.String()),
+				zap.String("error", ginCtx.Errors.String()),
 				zap.String("query", query),
 			)
 		}
+	case statusCode >= 500:
+		{
+			logger.Error("[GIN]",
+				zap.Int("statusCode", statusCode),
+				zap.String("latency", latency),
+				zap.String("clientIP", clientIP),
+				zap.String("method", method),
+				zap.String("path", path),
+				zap.String("error", ginCtx.Errors.String()),
+				zap.String("query", query),
+			)
+		}
+	default:
+		logger.Info("[GIN]",
+			zap.Int("statusCode", statusCode),
+			zap.String("latency", latency),
+			zap.String("clientIP", clientIP),
+			zap.String("method", method),
+			zap.String("path", path),
+			zap.String("error", ginCtx.Errors.String()),
+			zap.String("query", query),
+		)
 	}
+
 }
 func RecoveryWithZap() gin.HandlerFunc {
 
@@ -170,7 +167,7 @@ func WithContext(ctx context.Context) *zap.SugaredLogger {
 			if span.ParentID != nil {
 				return S.With(zap.String("parent_id", span.ParentID.String()), zap.String("span_id", span.ID.String()), zap.String("trace_id", span.TraceID.String()))
 			} else {
-				return S
+				return S.With(zap.String("span_id", span.ID.String()), zap.String("trace_id", span.TraceID.String()))
 			}
 
 		default:

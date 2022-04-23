@@ -3,8 +3,14 @@ package zcfg
 type ZeroConfig struct {
 	RPC               RpcCfg            `yaml:"rpc"`
 	SeverCenterConfig SeverCenterConfig `yaml:"center"`
+	Server            Server            `yaml:"server"`
 }
 type HystrixConfigTable map[string]*HystrixConfig
+
+type Server struct {
+	Port    int `yaml:"port"`
+	Timeout int `yaml:"timeout"`
+}
 
 type HystrixConfig struct {
 	Timeout                int `yaml:"timeout"`

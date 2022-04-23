@@ -30,6 +30,8 @@ var (
 	mavenSettings           *string
 	docSource               *string
 	docType                 *int
+	moduleHttp              *string
+	serviceHttp             *string
 )
 
 var genProjectCommand = &cobra.Command{
@@ -143,6 +145,14 @@ var golangModuleCommand = &cobra.Command{
 		b.StartBuild()
 	},
 }
+var golangHttpModuleCommand = &cobra.Command{
+	Use:   "golang_http_service",
+	Short: "generate golang http service",
+	Long:  "",
+	Run: func(cmd *cobra.Command, args []string) {
+		gen.HttpService(getGolangProjectByMod(), *moduleHttp, *serviceHttp)
+	},
+}
 
 func init() {
 	groupId = genProjectCommand.Flags().String("g", "", "Maven:groupId")
@@ -164,6 +174,9 @@ func init() {
 
 	docSource = genDocCommand.Flags().String("s", "", "doc source")
 	docType = genDocCommand.Flags().Int("t", 1, "doc type")
+
+	moduleHttp = golangHttpModuleCommand.Flags().String("m", "", "golang module")
+	serviceHttp = golangHttpModuleCommand.Flags().String("s", "", "golang service")
 }
 func GetAllCommands(cfg config.Config) []*cobra.Command {
 	if *maven == "" {
@@ -183,6 +196,7 @@ func GetAllCommands(cfg config.Config) []*cobra.Command {
 		installCommand,
 		golangModuleCommand,
 		genDocCommand,
+		golangHttpModuleCommand,
 	}
 }
 func getGolangProjectByMod() string {

@@ -9,17 +9,18 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 	zipkinot "github.com/openzipkin-contrib/zipkin-go-opentracing"
 	"github.com/openzipkin/zipkin-go"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"time"
 )
 
 type Server struct {
 	engine  *gin.Engine
-	port    int64
+	port    int
 	timeout time.Duration
 }
 
-func NewServer(port int64) *Server {
+func NewServer(port int) *Server {
 	t, err := zipkin.NewTracer(nil)
 	if err != nil {
 		zlog.S.Fatal(err)
@@ -29,8 +30,7 @@ func NewServer(port int64) *Server {
 	opentracing.SetGlobalTracer(tracer)
 	gin.SetMode(gin.DebugMode)
 	r := gin.New()
-	r.Use(zlog.RecoveryWithZap())
-	r.Use(Cors())
+	r.Use(PromMiddleware(nil), zlog.RecoveryWithZap(), Cors())
 	return &Server{
 		engine:  r,
 		port:    port,
@@ -41,11 +41,10 @@ func NewServer(port int64) *Server {
 func (s *Server) SetTracer(tracer opentracing.Tracer) {
 	opentracing.SetGlobalTracer(tracer)
 }
-func NewServerWithTimeout(port int64, timeout time.Duration, mode string) *Server {
-	gin.SetMode(mode)
+func NewServerWithTimeout(port int, timeout time.Duration) *Server {
+	gin.SetMode(gin.DebugMode)
 	r := gin.New()
-	r.Use(zlog.RecoveryWithZap())
-	r.Use(Cors())
+	r.Use(PromMiddleware(nil), zlog.RecoveryWithZap(), Cors())
 	return &Server{
 		engine:  r,
 		port:    port,
@@ -74,11 +73,15 @@ func (s *Server) MiddleHandle(handler ZeroGinHandler) func(context *gin.Context)
 		}
 		ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
 		defer cancel()
-		handler(opentracing.ContextWithSpan(ctx, ParentSpan), ginCtx)
+		start := time.Now()
+		ctx = opentracing.ContextWithSpan(ctx, ParentSpan)
+		handler(ctx, ginCtx)
+		zlog.GinLogger(ctx, start, ginCtx)
 	}
 }
 
 func (s *Server) Start(router func(engine *gin.Engine)) {
+	s.engine.GET("/metrics", PromHandler(promhttp.Handler()))
 	router(s.engine)
 	zlog.S.Infof("start server at %d", s.port)
 	if err := s.engine.Run(fmt.Sprintf(":%d", s.port)); err != nil {
