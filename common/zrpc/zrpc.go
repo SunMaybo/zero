@@ -35,18 +35,18 @@ type Server struct {
 	logger       *zap.Logger
 	isRegister   *atomic.Bool
 	zeroCfg      zcfg.ZeroConfig
-	tracer       opentracing.Tracer
 	center       center.Center
 	configParams []center.ConfigParam
 }
 
 func NewServer(cfg zcfg.ZeroConfig, options ...grpc.ServerOption) *Server {
-	tarcer, _ := zipkin.NewTracer(nil)
-	tarcer.SetNoop(false)
-	return NewServerWithTracer(cfg, zipkinot.Wrap(tarcer), options...)
+	tracer, _ := zipkin.NewTracer(nil)
+	tracer.SetNoop(false)
+	opentracing.SetGlobalTracer(zipkinot.Wrap(tracer))
+	return new(cfg, options...)
 }
 
-func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options ...grpc.ServerOption) *Server {
+func new(cfg zcfg.ZeroConfig, options ...grpc.ServerOption) *Server {
 	// init logger
 	zlog.InitLogger(cfg.RPC.IsOnline)
 	// setting grpc server timeout
@@ -54,7 +54,7 @@ func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options
 		cfg.RPC.Timeout = 5000
 	}
 	var defaultOptions = []grpc.UnaryServerInterceptor{
-		otgrpc.OpenTracingServerInterceptor(tracer),
+		otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer()),
 		grpc_revovery.UnaryServerInterceptor(grpc_revovery.WithRecoveryHandlerContext(func(ctx context.Context, p interface{}) (err error) {
 			zlog.WithContext(ctx).Error(p)
 			return nil
@@ -64,7 +64,7 @@ func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options
 		interceptor.UnaryTimeoutInterceptor(time.Duration(cfg.RPC.Timeout) * time.Millisecond),
 	}
 	defaultStreamOptions := []grpc.StreamServerInterceptor{
-		otgrpc.OpenTracingStreamServerInterceptor(tracer),
+		otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer()),
 		grpc_revovery.StreamServerInterceptor(grpc_revovery.WithRecoveryHandlerContext(func(ctx context.Context, p interface{}) (err error) {
 			zlog.WithContext(ctx).Error(p)
 			return nil
@@ -95,9 +95,11 @@ func NewServerWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer, options
 		zeroCfg:    cfg,
 		isRegister: atomic.NewBool(false),
 		logger:     zlog.LOGGER,
-		tracer:     tracer,
 		center:     center,
 	}
+}
+func (s *Server) SetTracer(tracer opentracing.Tracer) {
+	opentracing.SetGlobalTracer(tracer)
 }
 
 func (s *Server) AddConfigListener(configParam ...center.ConfigParam) {
@@ -202,16 +204,19 @@ type Client struct {
 	groupName    string
 	schema       string
 	hystrix      zcfg.HystrixConfigTable
-	tracer       opentracing.Tracer
 }
 
 func NewClient(cfg zcfg.ZeroConfig) *Client {
-	tarcer, _ := zipkin.NewTracer(nil)
-	tarcer.SetNoop(false)
-	return NewClientWithTracer(cfg, zipkinot.Wrap(tarcer))
+	tracer, _ := zipkin.NewTracer(nil)
+	tracer.SetNoop(false)
+	opentracing.SetGlobalTracer(zipkinot.Wrap(tracer))
+	return newClient(cfg)
 
 }
-func NewClientWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer) *Client {
+func (c *Client) SetTracer(tracer opentracing.Tracer) {
+	opentracing.SetGlobalTracer(tracer)
+}
+func newClient(cfg zcfg.ZeroConfig) *Client {
 	zlog.InitLogger(cfg.RPC.IsOnline)
 	center, err := center.NewSingleCenterClient(cfg.SeverCenterConfig)
 	if err != nil {
@@ -223,7 +228,6 @@ func NewClientWithTracer(cfg zcfg.ZeroConfig, tracer opentracing.Tracer) *Client
 		groupName:    cfg.RPC.GroupName,
 		schema:       cfg.SeverCenterConfig.ServerCenterName,
 		hystrix:      cfg.RPC.Hystrix,
-		tracer:       tracer,
 	}
 
 }
@@ -240,13 +244,13 @@ func (c *Client) GetGrpcClientWithTimeout(serviceName string, timeout time.Durat
 	options = append(options,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainUnaryInterceptor(
-			otgrpc.OpenTracingClientInterceptor(c.tracer),
+			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
 			interceptor.UnaryLoggerClientInterceptor(),
 			interceptor.TimeoutInterceptor(timeout),
 			interceptor.UnaryHystrixClientInterceptor(hystrixCfg),
 		),
 		grpc.WithChainStreamInterceptor(
-			otgrpc.OpenTracingStreamClientInterceptor(c.tracer),
+			otgrpc.OpenTracingStreamClientInterceptor(opentracing.GlobalTracer()),
 			interceptor.StreamLoggerClientInterceptor(),
 		),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
