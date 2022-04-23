@@ -42,6 +42,7 @@ type Server struct {
 
 func NewServer(cfg zcfg.ZeroConfig, options ...grpc.ServerOption) *Server {
 	tarcer, _ := zipkin.NewTracer(nil)
+	tarcer.SetNoop(false)
 	return NewServerWithTracer(cfg, zipkinot.Wrap(tarcer), options...)
 }
 
@@ -206,6 +207,7 @@ type Client struct {
 
 func NewClient(cfg zcfg.ZeroConfig) *Client {
 	tarcer, _ := zipkin.NewTracer(nil)
+	tarcer.SetNoop(false)
 	return NewClientWithTracer(cfg, zipkinot.Wrap(tarcer))
 
 }
