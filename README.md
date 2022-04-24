@@ -1,47 +1,47 @@
 - [zero](#zero)
-  - [设计原则](#%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99)
-  - [跨平台兼容](#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E5%85%BC%E5%AE%B9)
-  - [服务注册](#%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C)
-  - [服务配置](#%E6%9C%8D%E5%8A%A1%E9%85%8D%E7%BD%AE)
-  - [工具安装](#%E5%B7%A5%E5%85%B7%E5%AE%89%E8%A3%85)
-  - [安装Protobuff编译环境](#%E5%AE%89%E8%A3%85protobuff%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83)
-    - [安装工具](#%E5%AE%89%E8%A3%85%E5%B7%A5%E5%85%B7)
-    - [安装命令](#%E5%AE%89%E8%A3%85%E5%91%BD%E4%BB%A4)
-  - [快速开始](#%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B)
-    - [开启一个nacos-server](#%E5%BC%80%E5%90%AF%E4%B8%80%E4%B8%AAnacos-server)
-    - [`greeter.proto`](#greeterproto)
-    - [JAVA项目](#java%E9%A1%B9%E7%9B%AE)
-      - [演示DEMO](#%E6%BC%94%E7%A4%BAdemo)
-      - [生成project 项目](#%E7%94%9F%E6%88%90project-%E9%A1%B9%E7%9B%AE)
-      - [生成 Grpc+Protobuf Maven依赖包](#%E7%94%9F%E6%88%90-grpcprotobuf-maven%E4%BE%9D%E8%B5%96%E5%8C%85)
-      - [创建一个GRPC服务greeter-service](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAgrpc%E6%9C%8D%E5%8A%A1greeter-service)
-      - [创建一个调用服务greeter-api](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E8%B0%83%E7%94%A8%E6%9C%8D%E5%8A%A1greeter-api)
-    - [GOLANG项目](#golang%E9%A1%B9%E7%9B%AE)
-      - [演示Demo](#%E6%BC%94%E7%A4%BAdemo)
-      - [创建一个项目](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E9%A1%B9%E7%9B%AE)
-      - [proto文件管理](#proto%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86)
-      - [生成greeter-service服务](#%E7%94%9F%E6%88%90greeter-service%E6%9C%8D%E5%8A%A1)
-  - [项目结构](#%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84)
-    - [JAVA项目结构](#java%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84)
-    - [GOLANG项目结构](#golang%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84)
-  - [数据校验](#%E6%95%B0%E6%8D%AE%E6%A0%A1%E9%AA%8C)
-    - [JAVA数据校验](#java%E6%95%B0%E6%8D%AE%E6%A0%A1%E9%AA%8C)
-    - [GOLANG数据校验](#golang%E6%95%B0%E6%8D%AE%E6%A0%A1%E9%AA%8C)
-  - [文档生成](#%E6%96%87%E6%A1%A3%E7%94%9F%E6%88%90)
-  - [GRPC接口测试](#grpc%E6%8E%A5%E5%8F%A3%E6%B5%8B%E8%AF%95)
-  - [熔断降级](#%E7%86%94%E6%96%AD%E9%99%8D%E7%BA%A7)
-    - [GOLANG](#golang)
-    - [JAVA](#java)
-  - [链路追踪](#%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA)
-  - [授权机制](#%E6%8E%88%E6%9D%83%E6%9C%BA%E5%88%B6)
-    - [GOLANG](#golang-1)
-    - [JAVA](#java-1)
-  - [超时时间](#%E8%B6%85%E6%97%B6%E6%97%B6%E9%97%B4)
-    - [GOLANG](#golang-2)
-    - [JAVA](#java-2)
-  - [其它](#%E5%85%B6%E5%AE%83)
-    - [GOLANG HTTP服务](#golang-http%E6%9C%8D%E5%8A%A1)
-  
+    - [设计原则](#%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99)
+    - [跨平台兼容](#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E5%85%BC%E5%AE%B9)
+    - [服务注册](#%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C)
+    - [服务配置](#%E6%9C%8D%E5%8A%A1%E9%85%8D%E7%BD%AE)
+    - [工具安装](#%E5%B7%A5%E5%85%B7%E5%AE%89%E8%A3%85)
+    - [安装Protobuff编译环境](#%E5%AE%89%E8%A3%85protobuff%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83)
+        - [安装工具](#%E5%AE%89%E8%A3%85%E5%B7%A5%E5%85%B7)
+        - [安装命令](#%E5%AE%89%E8%A3%85%E5%91%BD%E4%BB%A4)
+    - [快速开始](#%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B)
+        - [开启一个nacos-server](#%E5%BC%80%E5%90%AF%E4%B8%80%E4%B8%AAnacos-server)
+        - [`greeter.proto`](#greeterproto)
+        - [JAVA项目](#java%E9%A1%B9%E7%9B%AE)
+            - [演示DEMO](#%E6%BC%94%E7%A4%BAdemo)
+            - [生成project 项目](#%E7%94%9F%E6%88%90project-%E9%A1%B9%E7%9B%AE)
+            - [生成 Grpc+Protobuf Maven依赖包](#%E7%94%9F%E6%88%90-grpcprotobuf-maven%E4%BE%9D%E8%B5%96%E5%8C%85)
+            - [创建一个GRPC服务greeter-service](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAgrpc%E6%9C%8D%E5%8A%A1greeter-service)
+            - [创建一个调用服务greeter-api](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E8%B0%83%E7%94%A8%E6%9C%8D%E5%8A%A1greeter-api)
+        - [GOLANG项目](#golang%E9%A1%B9%E7%9B%AE)
+            - [演示Demo](#%E6%BC%94%E7%A4%BAdemo)
+            - [创建一个项目](#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E9%A1%B9%E7%9B%AE)
+            - [proto文件管理](#proto%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86)
+            - [生成greeter-service服务](#%E7%94%9F%E6%88%90greeter-service%E6%9C%8D%E5%8A%A1)
+    - [项目结构](#%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84)
+        - [JAVA项目结构](#java%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84)
+        - [GOLANG项目结构](#golang%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84)
+    - [数据校验](#%E6%95%B0%E6%8D%AE%E6%A0%A1%E9%AA%8C)
+        - [JAVA数据校验](#java%E6%95%B0%E6%8D%AE%E6%A0%A1%E9%AA%8C)
+        - [GOLANG数据校验](#golang%E6%95%B0%E6%8D%AE%E6%A0%A1%E9%AA%8C)
+    - [文档生成](#%E6%96%87%E6%A1%A3%E7%94%9F%E6%88%90)
+    - [GRPC接口测试](#grpc%E6%8E%A5%E5%8F%A3%E6%B5%8B%E8%AF%95)
+    - [熔断降级](#%E7%86%94%E6%96%AD%E9%99%8D%E7%BA%A7)
+        - [GOLANG](#golang)
+        - [JAVA](#java)
+    - [链路追踪](#%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA)
+    - [授权机制](#%E6%8E%88%E6%9D%83%E6%9C%BA%E5%88%B6)
+        - [GOLANG](#golang-1)
+        - [JAVA](#java-1)
+    - [超时时间](#%E8%B6%85%E6%97%B6%E6%97%B6%E9%97%B4)
+        - [GOLANG](#golang-2)
+        - [JAVA](#java-2)
+    - [其它](#%E5%85%B6%E5%AE%83)
+        - [GOLANG HTTP服务](#golang-http%E6%9C%8D%E5%8A%A1)
+
 # zero
 
 本项目是一个微服务开发脚手架，旨在快速构建一个跨平台的微服务架构，帮助开发人员提高开发效率。
@@ -59,6 +59,19 @@
 1. 选择 `Grpc`+`Protobuf` 实现RPC服务调用并做到垮语言兼容。
 2. 采用`OpenTracing`+`Sleuth`标准实现链路追踪，你可以选择OpenTracing标准下的优秀的链路追踪项目集成。
 3. 自研`zctl`帮助工具方便开发者在`Windows`、`Linux`、`Macos`进行代码生成。
+
+## 功能清单
+- [X] 快速安装Protobuf+Grpc+Validate+Doc等工具
+- [X] GOLANG生成HTTP服务以及GRPC服务项目
+- [X] JAVA项目生成GRPC服务项目
+- [X] Proto+GRPC JAVA和GOLANG生成包括数据校验以及文档生成
+- [X] JAVA GRPC 工具包MAVEN管理
+- [X] OpeningTracing 链路追踪并格式化日志中添加追踪信息
+- [X] Nacos作为服务注册中心和配置中心
+- [X] prometheus metrics GRPC+HTTP接口监控
+- [X] GOLANG GRPC服务端熔断降级
+- [X] GRPC JWT鉴权
+- [X] GRPC+HTTP微服务项目服务端超时设置
 
 ## 服务注册
 
@@ -437,9 +450,26 @@ client,_:=zrpc.NewClient(cfg.Zero).GetGrpcClientWithTimeout(
 
 ### GOLANG HTTP服务
 
-通过工具快速创建一个GOLANG的HTTP接口服务
+#### 通过工具快速创建一个GOLANG的HTTP接口服务
 
 ```
  zctl golang_http_service --m security --s sso_api
 ```
 
+#### 目录结构
+
+```
+    config              ------> 存放配置文件对应的结构体
+    controller          ------> 存放gin controller接口handler
+    etc                 ------> 存放配置文件config.yaml
+    repo                ------> 数据库访问层
+    server              ------> 存放router信息
+    svc                 ------> 存放上下文资源配置
+    main.go             ------> 启动入口
+```
+#### 支持功能
+ 1. `通过Gin提供接口`
+ 2. `日志追踪` `Opening Tracing`  `通过Gorm访问MYSQL并日志中添加TraceID信息`
+ 3. `服务端设置timeout` 
+ 4. `prometheus metrics` 
+ 5. `通过Nacos做服务发现并调用GRPC接口服务`
