@@ -7,6 +7,7 @@ import (
 	"{{.Project}}/apis/{{.Module}}/{{.ServiceName}}/svc"
 	"github.com/SunMaybo/zero/common/zgin"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 type Server struct {
