@@ -44,29 +44,16 @@ func NewLogger(production bool) *zap.Logger {
 		level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
 	}
 	cfg := zap.Config{
-		Encoding: "console",
-		Sampling: &zap.SamplingConfig{
-			Initial:    100,
-			Thereafter: 100,
-		},
-		Level:            level,
-		Development:      !production,
-		OutputPaths:      []string{"stderr"},
-		ErrorOutputPaths: []string{"stderr"},
+		Encoding:    "console",
+		OutputPaths: []string{"stderr"},
 		EncoderConfig: zapcore.EncoderConfig{
-			TimeKey:        "T",
-			LevelKey:       "L",
-			NameKey:        "N",
-			CallerKey:      "C",
-			MessageKey:     "M",
-			StacktraceKey:  "S",
-			FunctionKey:    zapcore.OmitKey,
-			LineEnding:     zapcore.DefaultLineEnding,
-			EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-			EncodeTime:     zapcore.ISO8601TimeEncoder,
-			EncodeDuration: zapcore.SecondsDurationEncoder,
-			EncodeCaller:   zapcore.ShortCallerEncoder,
+			MessageKey:  "message",
+			TimeKey:     "time",
+			EncodeTime:  zapcore.RFC3339TimeEncoder,
+			LevelKey:    "level",
+			EncodeLevel: zapcore.CapitalColorLevelEncoder,
 		},
+		Level: level,
 	}
 	if logger, err := cfg.Build(); err != nil {
 		panic(err)
@@ -77,46 +64,27 @@ func NewLogger(production bool) *zap.Logger {
 func GinLogger(c context.Context, startTime time.Time, ginCtx *gin.Context) {
 	logger := WithContext(c)
 	latency := time.Since(startTime).String()
-	clientIP := ginCtx.ClientIP()
 	method := ginCtx.Request.Method
 	statusCode := ginCtx.Writer.Status()
 	path := ginCtx.Request.URL.Path
-	query := ginCtx.Request.URL.RawQuery
 	switch {
 	case statusCode >= 400 && statusCode <= 499:
 		{
-			logger.Warn("[GIN]",
-				zap.Int("statusCode", statusCode),
-				zap.String("latency", latency),
-				zap.String("clientIP", clientIP),
-				zap.String("method", method),
-				zap.String("path", path),
-				zap.String("error", ginCtx.Errors.String()),
-				zap.String("query", query),
-			)
+			logger.Warnf("%s %s %d %s", method, path, statusCode, latency)
+			if ginCtx.Errors != nil && ginCtx.Errors.ByType(gin.ErrorTypePrivate).String() != "" {
+				logger.Warnf("request error: %s", ginCtx.Errors.ByType(gin.ErrorTypePrivate).String())
+			}
+
 		}
 	case statusCode >= 500:
 		{
-			logger.Error("[GIN]",
-				zap.Int("statusCode", statusCode),
-				zap.String("latency", latency),
-				zap.String("clientIP", clientIP),
-				zap.String("method", method),
-				zap.String("path", path),
-				zap.String("error", ginCtx.Errors.String()),
-				zap.String("query", query),
-			)
+			logger.Errorf("%s %s %d %s", method, path, statusCode, latency)
+			if ginCtx.Errors != nil && ginCtx.Errors.ByType(gin.ErrorTypePrivate).String() != "" {
+				logger.Errorf("request error: %s", ginCtx.Errors.ByType(gin.ErrorTypePrivate).String())
+			}
 		}
 	default:
-		logger.Info("[GIN]",
-			zap.Int("statusCode", statusCode),
-			zap.String("latency", latency),
-			zap.String("clientIP", clientIP),
-			zap.String("method", method),
-			zap.String("path", path),
-			zap.String("error", ginCtx.Errors.String()),
-			zap.String("query", query),
-		)
+		logger.Infof("%s %s %d %s", method, path, statusCode, latency)
 	}
 
 }
