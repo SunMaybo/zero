@@ -5,7 +5,7 @@ const JavaRPCImplPattern = `package {{.PackageName}};
 import io.grpc.stub.StreamObserver;
 
 
-public abstract class {{.ServiceName}} extends {{.GrpcFileName}}.{{.ServiceBaseName}} {
+public abstract class {{.ServiceName}} extends {{.ServiceBaseName}} {
    {{range $index, $method := .MethodSigns}}
 	{{if eq $method.IsStream 0}}
     @Override
