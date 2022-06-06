@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -36,7 +37,7 @@ func Run(arg, dir string) (string, error) {
 	case OsMac, OsLinux:
 		cmd = exec.Command("/bin/bash", "-c", arg)
 	case OsWindows:
-		cmd = exec.Command("cmd.exe", "/c", arg)
+		cmd = exec.Command(arg)
 	default:
 		return "", fmt.Errorf("unexpected os: %v", goos)
 	}
@@ -58,16 +59,56 @@ func Run(arg, dir string) (string, error) {
 	return stdout.String(), nil
 }
 func JavaProtoExecute(workDir, protoProjectDir string) (string, error) {
-	return Run(getProtoc()+fmt.Sprintf(
-		" --plugin=protoc-gen-grpc-java=%s "+
-			"--plugin=protoc-gen-validate-java=%s "+
-			"-I=%s "+
-			"-I=%s "+
-			"--validate_out=\"lang=java:%s\" --java_out=%s  --grpc-java_out=%s *.proto",
-		getProtoJavaGrpc(), getProtoJavaValidate(), getProtoInclude(), workDir,
-		file.GetFilePath(protoProjectDir, "/src/main/java"),
-		file.GetFilePath(protoProjectDir, "/src/main/java"),
-		file.GetFilePath(protoProjectDir, "/src/main/java")), workDir)
+	if runtime.GOOS == "windows" {
+		return windowExec(getProtoc(), workDir,
+			fmt.Sprintf("--plugin=protoc-gen-grpc-java=%s", getProtoJavaGrpc()),
+			fmt.Sprintf("--plugin=protoc-gen-validate=%s", getProtoJavaValidate()),
+			fmt.Sprintf("-I=%s", getProtoInclude()),
+			fmt.Sprintf("-I=%s", workDir),
+			fmt.Sprintf("--validate_out=lang=java:%s", file.GetFilePath(protoProjectDir, "/src/main/java")),
+			fmt.Sprintf("--java_out=%s", file.GetFilePath(protoProjectDir, "/src/main/java")),
+			fmt.Sprintf("--grpc-java_out=%s", file.GetFilePath(protoProjectDir, "/src/main/java")),
+			"*.proto",
+		)
+	} else {
+		return Run(getProtoc()+fmt.Sprintf(
+			" --plugin=protoc-gen-grpc-java=%s "+
+				"--plugin=protoc-gen-validate=%s "+
+				"-I=%s "+
+				"-I=%s "+
+				"--validate_out=lang=java:%s --java_out=%s  --grpc-java_out=%s *.proto",
+			getProtoJavaGrpc(), getProtoJavaValidate(), getProtoInclude(), workDir,
+			file.GetFilePath(protoProjectDir, "/src/main/java"),
+			file.GetFilePath(protoProjectDir, "/src/main/java"),
+			file.GetFilePath(protoProjectDir, "/src/main/java")), workDir)
+	}
+
+}
+func windowExec(protoc string, dir string, args ...string) (string, error) {
+	cmd := exec.Command(protoc, args...)
+	cmd.Dir = dir
+	result := ""
+	if outPipe, err := cmd.StdoutPipe(); err != nil {
+		return "", err
+	} else {
+		cmd.Start()
+		in := bufio.NewScanner(outPipe)
+		for in.Scan() {
+			var buff []byte
+			for i, b := range in.Bytes() {
+				if b == 0 {
+					continue
+				}
+				if len(in.Bytes()) <= i+2 && b == 13 {
+					continue
+				}
+				buff = append(buff, b)
+			}
+			result += string(buff)
+		}
+		cmd.Wait()
+	}
+	return result, nil
 }
 func GolangProtoExecute(workDir, protoProjectDir, protoFilePath string) (string, error) {
 	return Run(getProtoc()+fmt.Sprintf(" --plugin=protoc-gen-go-grpc=%s -I=%s -I=%s --go_out=%s --go-grpc_out=%s %s",

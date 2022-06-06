@@ -69,8 +69,13 @@ var genGrpcCommand = &cobra.Command{
 	Short: "generate Maven grpc package",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		workDir := ""
 		path, _ := os.Getwd()
-		workDir := path + "/" + *protoDir
+		if strings.HasPrefix(*protoDir, "/") {
+			workDir = file.GetFilePath(path, *protoDir)
+		} else {
+			workDir = file.GetFilePath(path, "/"+*protoDir)
+		}
 		//通过proto文件获取当前java package
 		javaPackage := ""
 		if exist, err := file.PathExists(workDir); err != nil || !exist {
@@ -108,7 +113,7 @@ var genGrpcCommand = &cobra.Command{
 			zlog.S.Error("can not find java package")
 			return
 		}
-		protoProject := path + "/grpc_java/" + project
+		protoProject := file.GetFilePath(path, "/grpc_java/"+project)
 		artifactIdGrpc := strings.ReplaceAll(project, "_", "-")
 		gen.JavaGrpcPackage(project, groupIdGrpc, artifactIdGrpc, *versionGrpc)
 		gen.JavaGrpcCompileAndDeploy(*maven, *mavenSettings, protoProject, *altDeploymentRepository, workDir)

@@ -115,8 +115,7 @@ var ProtoMaven = `<?xml version="1.0" encoding="UTF-8"?>
     <properties>
         <protobuf.version>3.19.1</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
-        <spring-boot.version>2.4.5</spring-boot.version>
-        <pgv.version>0.6.2</pgv.version>
+        <pgv.version>0.6.7</pgv.version>
     </properties>
     <dependencies>
         <dependency>
@@ -127,7 +126,7 @@ var ProtoMaven = `<?xml version="1.0" encoding="UTF-8"?>
         <dependency>
             <groupId>io.envoyproxy.protoc-gen-validate</groupId>
             <artifactId>pgv-java-grpc</artifactId>
-            <version>0.6.1</version>
+            <version>${pgv.version}</version>
         </dependency>
         <dependency>
             <groupId>jakarta.annotation</groupId>

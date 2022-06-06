@@ -4,7 +4,11 @@
 package cmd
 
 import (
+	"fmt"
+	"io"
+	"log"
 	"os/exec"
+	"strings"
 	"syscall"
 )
 
