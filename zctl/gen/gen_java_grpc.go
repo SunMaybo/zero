@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -98,6 +99,9 @@ func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altD
 	err = filepath.Walk(protoProjectDir, func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
+		}
+		if runtime.GOOS == "windows" {
+			path = strings.ReplaceAll(path, "\\", "/")
 		}
 		return javaGrpcImpl(protoProjectDir, path)
 	})
