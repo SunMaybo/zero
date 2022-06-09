@@ -117,7 +117,7 @@ var genGrpcCommand = &cobra.Command{
 		artifactIdGrpc := strings.ReplaceAll(project, "_", "-")
 		gen.JavaGrpcPackage(project, groupIdGrpc, artifactIdGrpc, *versionGrpc)
 		gen.JavaGrpcCompileAndDeploy(*maven, *mavenSettings, protoProject, *altDeploymentRepository, workDir)
-		zlog.S.Infow("generate grpc package success", "groupId", groupIdGrpc, "artifactId", artifactIdGrpc, "version", *versionGrpc)
+		zlog.S.Infow("generate grpc package success", "groupId", groupIdGrpc, "artifactId", artifactIdGrpc+"-proto", "version", *versionGrpc)
 	},
 }
 var installCommand = &cobra.Command{
