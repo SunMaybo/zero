@@ -3,9 +3,11 @@ package template
 const JavaRPCImplPattern = `package {{.PackageName}};
 
 import io.grpc.stub.StreamObserver;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class {{.ServiceName}} extends {{.GrpcFileName}}.{{.ServiceBaseName}} {
+   private  final Logger LOGGER= LoggerFactory.getLogger(this.getClass());
    {{range $index, $method := .MethodSigns}}
 	{{if eq $method.IsStream 0}}
     @Override
@@ -14,6 +16,7 @@ public abstract class {{.ServiceName}} extends {{.GrpcFileName}}.{{.ServiceBaseN
 			responseObserver.onNext({{$method.Method}}(request));
         	responseObserver.onCompleted();
         } catch (Exception e) {
+			LOGGER.error("grpc caller err:",e);
             responseObserver.onError(e);
         }
     }
