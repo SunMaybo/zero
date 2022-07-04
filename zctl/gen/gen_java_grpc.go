@@ -74,17 +74,26 @@ func javaGrpcPom(project, groupId, artifactId, version string) (string, error) {
 	}
 	return result, nil
 }
-func javaGrpcImpl(packageFile, javaGrpcFilePath string) error {
-	serviceSign := parser.ParserJavaGrpc(javaGrpcFilePath)
+func javaGrpcImpl(javaGrpcDir, javaGrpcFileName string) error {
+	serviceSign := parser.ParserJavaGrpc(file.GetFilePath(javaGrpcDir, javaGrpcFileName))
 	if len(serviceSign.MethodSigns) <= 0 {
 		return nil
 	}
+	packageName := strings.ReplaceAll(javaGrpcDir, "//", "/")
+	packageName = strings.ReplaceAll(packageName, "\\", "/")
+	packageName = strings.ReplaceAll(packageName, "\\\\", "/")
+	packageName = strings.ReplaceAll(packageName, "/", ".")
+	packageName = packageName[strings.Index(packageName, "src.main.java.")+len("src.main.java."):]
+	if strings.HasSuffix(packageName, ".") {
+		packageName = packageName[:len(packageName)-1]
+	}
+	serviceSign.PackageName = packageName
 	result, err := template.Parser(template.JavaRPCImplPattern, serviceSign)
 	if err != nil {
 		return err
 	}
 
-	if err := file.WriterFile(file.GetFilePath(packageFile, "/src/main/java/"+strings.ReplaceAll(serviceSign.PackageName, ".", "/")+"/"+serviceSign.ServiceName+".java"), []byte(result)); err != nil {
+	if err := file.WriterFile(file.GetFilePath(javaGrpcDir, serviceSign.ServiceName+".java"), []byte(result)); err != nil {
 		zlog.S.Errorw("generate java grpc impl error", "err", err)
 		os.Exit(-1)
 	}
@@ -103,7 +112,7 @@ func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altD
 		if runtime.GOOS == "windows" {
 			path = strings.ReplaceAll(path, "\\", "/")
 		}
-		return javaGrpcImpl(protoProjectDir, path)
+		return javaGrpcImpl(strings.ReplaceAll(path, info.Name(), ""), info.Name())
 	})
 
 	if err != nil {

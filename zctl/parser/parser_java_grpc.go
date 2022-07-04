@@ -113,7 +113,6 @@ func ParserJavaGrpc(filePath string) JavaRpcImpl {
 			mtd.IsStream = IsNotStream
 			mtd.Param2 = strings.TrimSpace(blockNext[:paramEndIdx])
 			mtd.Param2T = strings.TrimSpace(mtd.Param2[strings.Index(mtd.Param2, "<")+1 : strings.Index(mtd.Param2, ">")])
-			javaRpcImpl.PackageName = strings.Join(strings.Split(mtd.Param2T, ".")[:len(strings.Split(mtd.Param2T, "."))-2], ".")
 		} else {
 			mtdStartIdx := strings.Index(block.CodeBlock, "public")
 			mtdEndIdx := strings.Index(block.CodeBlock, ">")
@@ -122,8 +121,6 @@ func ParserJavaGrpc(filePath string) JavaRpcImpl {
 			mtd.Method = strings.TrimSpace(block.CodeBlock[mtdEndIdx+1 : mtdMthodEndIdx])
 			mtdEndIdx = strings.Index(block.CodeBlock, ")")
 			mtd.Param1 = strings.TrimSpace(block.CodeBlock[mtdMthodEndIdx+1 : mtdEndIdx])
-			packageClassName := mtd.ReturnParam[strings.Index(mtd.ReturnParam, "<")+1 : strings.Index(mtd.ReturnParam, ">")]
-			javaRpcImpl.PackageName = strings.Join(strings.Split(packageClassName, ".")[:len(strings.Split(packageClassName, "."))-2], ".")
 			mtd.IsStream = DuplexStream
 		}
 

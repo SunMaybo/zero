@@ -116,12 +116,18 @@ var ProtoMaven = `<?xml version="1.0" encoding="UTF-8"?>
         <protobuf.version>3.19.1</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
         <pgv.version>0.6.7</pgv.version>
+        <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>${protobuf.version}</version>
+        </dependency>
+		<dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.7</version>
         </dependency>
         <dependency>
             <groupId>io.envoyproxy.protoc-gen-validate</groupId>
@@ -162,6 +168,18 @@ var ProtoMaven = `<?xml version="1.0" encoding="UTF-8"?>
                     <target>8</target>
                 </configuration>
             </plugin>
+ 			<plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-source-plugin</artifactId>
+              <executions>
+                  <execution>
+                      <id>attach-sources</id>
+                      <goals>
+                          <goal>jar</goal>
+                      </goals>
+                  </execution>
+              </executions>
+          </plugin>
         </plugins>
     </build>
 

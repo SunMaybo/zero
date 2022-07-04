@@ -7,5 +7,5 @@ func TestParser(t *testing.T) {
 	_, _ = Parser("../../proto/hello/test_services.proto")
 }
 func TestParserJavaGrpc(t *testing.T) {
-	ParserJavaGrpc("/Users/fico/go/src/zero/grpc_java/test_apis/src/main/java/com/xuhou/middle/proto/test_apis/GreeterGrpc.java")
+	ParserJavaGrpc("/Users/fico/project/ins-xhwallet-platform/grpc_java/universal/src/main/java/cn/xunhou/grpc/proto/universal/UniversalServiceGrpc.java")
 }

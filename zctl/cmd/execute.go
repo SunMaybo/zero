@@ -61,7 +61,7 @@ func Run(arg, dir string) (string, error) {
 func JavaProtoExecute(workDir, protoProjectDir string) (string, error) {
 	if runtime.GOOS == "windows" {
 		return windowExec(getProtoc(), workDir,
-			fmt.Sprintf("--plugin=protoc-gen-grpc-java=%s", getProtoJavaGrpc()),
+			fmt.Sprintf("--experimental_allow_proto3_optional --plugin=protoc-gen-grpc-java=%s", getProtoJavaGrpc()),
 			fmt.Sprintf("--plugin=protoc-gen-validate=%s", getProtoJavaValidate()),
 			fmt.Sprintf("-I=%s", getProtoInclude()),
 			fmt.Sprintf("-I=%s", workDir),
@@ -72,7 +72,7 @@ func JavaProtoExecute(workDir, protoProjectDir string) (string, error) {
 		)
 	} else {
 		return Run(getProtoc()+fmt.Sprintf(
-			" --plugin=protoc-gen-grpc-java=%s "+
+			" --experimental_allow_proto3_optional --plugin=protoc-gen-grpc-java=%s "+
 				"--plugin=protoc-gen-validate=%s "+
 				"-I=%s "+
 				"-I=%s "+
