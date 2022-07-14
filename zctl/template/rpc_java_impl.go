@@ -2,6 +2,8 @@ package template
 
 const JavaRPCImplPattern = `package {{.PackageName}};
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
@@ -17,6 +19,11 @@ public abstract class {{.ServiceName}} extends {{.GrpcFileName}}.{{.ServiceBaseN
 			responseObserver.onNext({{$method.Method}}(request));
         	responseObserver.onCompleted();
         } catch (StatusRuntimeException e) {
+			try {
+                LOGGER.warn("Caller Request {{$method.Method}}======>" + JsonFormat.printer().print(request));
+            } catch (InvalidProtocolBufferException ex) {
+                ex.printStackTrace();
+            }
 			LOGGER.error("grpc caller err:",e);
             responseObserver.onError(e);
         }
