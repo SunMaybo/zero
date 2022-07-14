@@ -2,6 +2,7 @@ package template
 
 const JavaRPCImplPattern = `package {{.PackageName}};
 
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,7 @@ public abstract class {{.ServiceName}} extends {{.GrpcFileName}}.{{.ServiceBaseN
  		try {        
 			responseObserver.onNext({{$method.Method}}(request));
         	responseObserver.onCompleted();
-        } catch (Exception e) {
+        } catch (StatusRuntimeException e) {
 			LOGGER.error("grpc caller err:",e);
             responseObserver.onError(e);
         }

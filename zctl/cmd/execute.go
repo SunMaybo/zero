@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/user"
 	"runtime"
+	"strings"
 )
 
 const (
@@ -60,8 +61,11 @@ func Run(arg, dir string) (string, error) {
 }
 func JavaProtoExecute(workDir, protoProjectDir string) (string, error) {
 	if runtime.GOOS == "windows" {
+		workDir = strings.ReplaceAll(workDir, "\\.\\", "\\")
+		workDir = strings.ReplaceAll(workDir, "/./", "/")
 		return windowExec(getProtoc(), workDir,
-			fmt.Sprintf("--experimental_allow_proto3_optional --plugin=protoc-gen-grpc-java=%s", getProtoJavaGrpc()),
+			"--experimental_allow_proto3_optional",
+			fmt.Sprintf("--plugin=protoc-gen-grpc-java=%s", getProtoJavaGrpc()),
 			fmt.Sprintf("--plugin=protoc-gen-validate=%s", getProtoJavaValidate()),
 			fmt.Sprintf("-I=%s", getProtoInclude()),
 			fmt.Sprintf("-I=%s", workDir),
@@ -85,6 +89,7 @@ func JavaProtoExecute(workDir, protoProjectDir string) (string, error) {
 
 }
 func windowExec(protoc string, dir string, args ...string) (string, error) {
+	zlog.S.Infof("protoc:%s,%s", dir, protoc+" "+strings.Join(args, " "))
 	cmd := exec.Command(protoc, args...)
 	cmd.Dir = dir
 	result := ""
