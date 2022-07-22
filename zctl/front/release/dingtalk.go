@@ -1,4 +1,4 @@
-package dingtalk
+package release
 
 import (
 	"bytes"
@@ -22,7 +22,7 @@ type DingTalk struct {
 	secret string
 }
 
-func New(secret, token string) *DingTalk {
+func DingTalkNew(secret, token string) *DingTalk {
 	return &DingTalk{
 		secret: secret,
 		token:  token,

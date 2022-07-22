@@ -34,6 +34,9 @@ var (
 	moduleHttp              *string
 	serviceHttp             *string
 	envFront                *string
+	frontWebPk              string
+	dingTalkToken           string
+	dingTalkSecret          string
 )
 
 var genProjectCommand = &cobra.Command{
@@ -51,7 +54,7 @@ var delayFrontCommand = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := os.Getwd()
-		release.Delay(*envFront, path, false)
+		release.Delay(*envFront, path, false, frontWebPk, dingTalkSecret)
 	},
 }
 var scaleFrontCommand = &cobra.Command{
@@ -60,7 +63,7 @@ var scaleFrontCommand = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := os.Getwd()
-		release.Delay("format", path, true)
+		release.Delay("format", path, true, frontWebPk, dingTalkSecret)
 	},
 }
 
@@ -217,6 +220,12 @@ func GetAllCommands(cfg config.Config) []*cobra.Command {
 	}
 	if *proxy == "" && cfg.Proxy != "" {
 		proxy = &cfg.Proxy
+	}
+	if cfg.FrontWebPk != "" {
+		frontWebPk = cfg.FrontWebPk
+	}
+	if cfg.DingTalkSecret != "" {
+		dingTalkSecret = cfg.DingTalkSecret
 	}
 	mavenSettings = &cfg.MavenSettings
 	return []*cobra.Command{
