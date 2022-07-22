@@ -8,7 +8,6 @@ import (
 	"io"
 	"log"
 	"os/exec"
-	"runtime"
 	"strings"
 	"syscall"
 )
@@ -47,7 +46,6 @@ func Execute(name, dir string, callbackResult func(lines string), args ...string
 				break
 			}
 		}
-		runtime.GOOS
 		if err := cmd.Wait(); err != nil {
 			log.Printf("Error waiting for command execution: %s......", err.Error())
 			return err

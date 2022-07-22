@@ -16,7 +16,7 @@ var protocURL = map[string]string{
 	"darwin":  "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.0/protoc-3.20.0-osx-x86_64.zip",
 	"windows": "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.0/protoc-3.20.0-win64.zip",
 	"linux":   "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.0/protoc-3.20.0-linux-x86_64.zip",
-	"arm64":   "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.0/protoc-3.20.0-linux-aarch_64.zip",
+	"arm64":   "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.0/protoc-3.20.0-osx-aarch_64.zip",
 }
 var protoValidateURL = map[string]string{
 	"windows": "https://repo1.maven.org/maven2/io/envoyproxy/protoc-gen-validate/protoc-gen-validate/0.6.7/protoc-gen-validate-0.6.7-windows-x86_64.exe",
