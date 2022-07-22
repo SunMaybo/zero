@@ -5,6 +5,7 @@ import (
 	"github.com/SunMaybo/zero/common/zlog"
 	"github.com/SunMaybo/zero/zctl/config"
 	"github.com/SunMaybo/zero/zctl/file"
+	"github.com/SunMaybo/zero/zctl/front/release"
 	"github.com/SunMaybo/zero/zctl/gen"
 	"github.com/SunMaybo/zero/zctl/install"
 	"github.com/SunMaybo/zero/zctl/parser"
@@ -32,6 +33,7 @@ var (
 	docType                 *int
 	moduleHttp              *string
 	serviceHttp             *string
+	envFront                *string
 )
 
 var genProjectCommand = &cobra.Command{
@@ -42,6 +44,26 @@ var genProjectCommand = &cobra.Command{
 		gen.JavaGrpcParentProject(*artifactId, *groupId, *artifactId, "0.0.1-SNAPSHOT")
 	},
 }
+
+var delayFrontCommand = &cobra.Command{
+	Use:   "front_delay",
+	Short: "delay front project",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		path, _ := os.Getwd()
+		release.Delay(*envFront, path, false)
+	},
+}
+var scaleFrontCommand = &cobra.Command{
+	Use:   "front_scale",
+	Short: "scale front project",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		path, _ := os.Getwd()
+		release.Delay("format", path, true)
+	},
+}
+
 var genDocCommand = &cobra.Command{
 	Use:   "doc",
 	Short: "generate proto doc",
@@ -182,6 +204,8 @@ func init() {
 
 	moduleHttp = golangHttpModuleCommand.Flags().String("m", "", "golang module")
 	serviceHttp = golangHttpModuleCommand.Flags().String("s", "", "golang service")
+
+	envFront = delayFrontCommand.Flags().String("env", "qa39", "current delay env on qa、sandbox、format")
 }
 func GetAllCommands(cfg config.Config) []*cobra.Command {
 	if *maven == "" {
@@ -202,6 +226,8 @@ func GetAllCommands(cfg config.Config) []*cobra.Command {
 		golangModuleCommand,
 		genDocCommand,
 		golangHttpModuleCommand,
+		delayFrontCommand,
+		scaleFrontCommand,
 	}
 }
 func getGolangProjectByMod() string {

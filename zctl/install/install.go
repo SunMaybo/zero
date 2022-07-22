@@ -16,26 +16,29 @@ var protocURL = map[string]string{
 	"darwin":  "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.0/protoc-3.20.0-osx-x86_64.zip",
 	"windows": "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.0/protoc-3.20.0-win64.zip",
 	"linux":   "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.0/protoc-3.20.0-linux-x86_64.zip",
+	"arm64":   "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.0/protoc-3.20.0-linux-aarch_64.zip",
 }
 var protoValidateURL = map[string]string{
 	"windows": "https://repo1.maven.org/maven2/io/envoyproxy/protoc-gen-validate/protoc-gen-validate/0.6.7/protoc-gen-validate-0.6.7-windows-x86_64.exe",
 	"linux":   "https://repo1.maven.org/maven2/io/envoyproxy/protoc-gen-validate/protoc-gen-validate/0.6.7/protoc-gen-validate-0.6.7-linux-x86_64.exe",
 	"darwin":  "https://repo1.maven.org/maven2/io/envoyproxy/protoc-gen-validate/protoc-gen-validate/0.6.7/protoc-gen-validate-0.6.7-osx-x86_64.exe",
+	"arm64":   "https://repo1.maven.org/maven2/io/envoyproxy/protoc-gen-validate/protoc-gen-validate/0.6.7/protoc-gen-validate-0.6.7-osx-aarch_64.exe",
 }
 
 var docURL = map[string]string{
 	"windows": "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_windows_amd64.tar.gz",
 	"linux":   "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_linux_amd64.tar.gz",
 	"darwin":  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_amd64.tar.gz",
+	"arm64":   "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_arm64.tar.gz",
 }
 var grpcJava = map[string]string{
 	"windows": "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.45.1/protoc-gen-grpc-java-1.45.1-windows-x86_64.exe",
 	"linux":   "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.45.1/protoc-gen-grpc-java-1.45.1-linux-x86_64.exe",
 	"darwin":  "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.45.1/protoc-gen-grpc-java-1.45.1-osx-x86_64.exe",
+	"arm64":   "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.45.1/protoc-gen-grpc-java-1.45.1-osx-aarch_64.exe",
 }
 
 func GolangInstall() {
-
 	if !cmd.GolangVersionGreaterThan16() {
 		zlog.S.Errorw("golang version is less than 1.6")
 		return
@@ -69,7 +72,8 @@ func JavaInstall() {
 }
 
 func DownloadProtoc() string {
-	if protocURL, ok := protocURL[runtime.GOOS]; !ok {
+	installKey := getInstallKey()
+	if protocURL, ok := protocURL[installKey]; !ok {
 		zlog.S.Errorf("%s not support", runtime.GOOS)
 		os.Exit(-1)
 	} else {
@@ -100,7 +104,8 @@ func DownloadProtoc() string {
 }
 
 func DownloadProtoValidate() {
-	if protocValidateURL, ok := protoValidateURL[runtime.GOOS]; !ok {
+	installKey := getInstallKey()
+	if protocValidateURL, ok := protoValidateURL[installKey]; !ok {
 		zlog.S.Errorf("%s not support", runtime.GOOS)
 		os.Exit(-1)
 	} else {
@@ -125,7 +130,8 @@ func DownloadProtoValidate() {
 	}
 }
 func DownloadJavaGrpc() {
-	if protocGrpcURL, ok := grpcJava[runtime.GOOS]; !ok {
+	installKey := getInstallKey()
+	if protocGrpcURL, ok := grpcJava[installKey]; !ok {
 		zlog.S.Errorf("%s not support", runtime.GOOS)
 		os.Exit(-1)
 	} else {
@@ -144,12 +150,13 @@ func DownloadJavaGrpc() {
 	}
 }
 func DownloadProtocDoc() {
+	installKey := getInstallKey()
 	basePath := getProtoBasePath()
 	if err := file.MkdirAll(basePath); err != nil {
 		zlog.S.Errorf("mkdir %s error: %s", basePath, err)
 		os.Exit(1)
 	}
-	if protocURL, ok := docURL[runtime.GOOS]; !ok {
+	if protocURL, ok := docURL[installKey]; !ok {
 		zlog.S.Errorf("%s not support", runtime.GOOS)
 		os.Exit(-1)
 	} else {
@@ -196,4 +203,14 @@ func getProtoBasePath() string {
 		protoPath = homeDir + "/proto"
 	}
 	return protoPath
+}
+
+func getInstallKey() string {
+	installKey := ""
+	if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" {
+		installKey = "arm64"
+	} else {
+		installKey = runtime.GOOS
+	}
+	return installKey
 }
