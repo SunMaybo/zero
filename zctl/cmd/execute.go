@@ -131,11 +131,32 @@ func GetGolangProtoValidate(protoServicePath, pbFilePath string) error {
 
 func GetProtoDoc(workDir, docOutDir string, docType DocType) error {
 	if docType == Html {
-		_, err := Run(getProtoc()+fmt.Sprintf(" --doc_out=%s --plugin=protoc-gen-doc=%s --doc_opt=html,index.html *.proto", docOutDir, getProtoDoc()), workDir)
-		return err
+		if runtime.GOOS == "windows" {
+			_, err := windowExec(
+				getProtoc(),
+				workDir,
+				fmt.Sprintf("--doc_out=%s", docOutDir),
+				fmt.Sprintf("--plugin=protoc-gen-doc=%s", getProtoDoc()),
+				"--doc_opt=html,index.html",
+				"*.proto")
+			return err
+		} else {
+			_, err := Run(getProtoc()+fmt.Sprintf(" --doc_out=%s --plugin=protoc-gen-doc=%s --doc_opt=html,index.html *.proto", docOutDir, getProtoDoc()), workDir)
+			return err
+		}
 	} else {
-		_, err := Run(getProtoc()+fmt.Sprintf(" --doc_out=%s --plugin=protoc-gen-doc=%s --doc_opt=markdown,index.md *.proto", docOutDir, getProtoDoc()), workDir)
-		return err
+		if runtime.GOOS == "windows" {
+			_, err := windowExec(getProtoc(),
+				workDir,
+				fmt.Sprintf("--doc_out=%s", docOutDir),
+				fmt.Sprintf("--plugin=protoc-gen-doc=%s", getProtoDoc()),
+				"--doc_opt=markdown,index.md",
+				"*.proto")
+			return err
+		} else {
+			_, err := Run(getProtoc()+fmt.Sprintf(" --doc_out=%s --plugin=protoc-gen-doc=%s --doc_opt=markdown,index.md *.proto", docOutDir, getProtoDoc()), workDir)
+			return err
+		}
 	}
 
 }

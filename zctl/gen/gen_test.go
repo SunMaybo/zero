@@ -1,19 +1,17 @@
 package gen
 
 import (
-	"io/fs"
-	"path/filepath"
 	"testing"
 )
 
-func TestGenJAVARpc(t *testing.T) {
-	err := filepath.Walk("/Users/fico/go/src/zero/grpc_java/test_apis/src/main/java/com/xuhou/middle/proto/test_apis", func(path string, info fs.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-		return javaGrpcImpl("/Users/fico/go/src/zero/grpc_java/test_apis/src/main/java/com/xuhou/middle/proto/test_apis", path)
-	})
-	if err != nil {
+func TestGenProto(t *testing.T) {
+	if err := GenerateSchema("/Users/fico/Desktop/project_pc/ins-xhportal-platform/sql", "test"); err != nil {
+		t.Fatal(err)
+	}
+
+}
+func TestGenEntity(t *testing.T) {
+	if err := GenerateDao("/Users/fico/Desktop/project_pc/ins-xhportal-platform/sql", "test"); err != nil {
 		t.Fatal(err)
 	}
 }
