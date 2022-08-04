@@ -34,9 +34,11 @@ var (
 	moduleHttp              *string
 	serviceHttp             *string
 	envFront                *string
+	sqlDir                  *string
 	frontWebPk              string
 	dingTalkToken           string
 	dingTalkSecret          string
+	sqlServiceName          *string
 )
 
 var genProjectCommand = &cobra.Command{
@@ -209,6 +211,11 @@ func init() {
 	serviceHttp = golangHttpModuleCommand.Flags().String("s", "", "golang service")
 
 	envFront = delayFrontCommand.Flags().String("env", "qa39", "current delay env on qa、sandbox、format")
+	sqlDir = sqlToCommand.Flags().String("p", "", "sql dir")
+	sqlServiceName = sqlToCommand.Flags().String("s", "test", "service name")
+
+	sqlDir = sqlToDao.Flags().String("p", "", "sql dir")
+	sqlServiceName = sqlToDao.Flags().String("s", "test", "service name")
 }
 func GetAllCommands(cfg config.Config) []*cobra.Command {
 	if *maven == "" {
@@ -237,6 +244,8 @@ func GetAllCommands(cfg config.Config) []*cobra.Command {
 		golangHttpModuleCommand,
 		delayFrontCommand,
 		scaleFrontCommand,
+		sqlToCommand,
+		sqlToDao,
 	}
 }
 func getGolangProjectByMod() string {
@@ -254,4 +263,36 @@ func getGolangProjectByMod() string {
 	zlog.S.Error("can not find module from go.mod")
 	os.Exit(-1)
 	return ""
+}
+
+var sqlToCommand = &cobra.Command{
+	Use:   "sql_to_proto",
+	Short: "generate sql to proto",
+	Long:  "",
+	Run: func(cmd *cobra.Command, args []string) {
+		if *sqlDir == "" {
+			*sqlDir = "."
+		}
+		pwd, _ := os.Getwd()
+		filepath := file.GetFilePath(pwd, "/"+*sqlDir)
+		if err := gen.GenerateSchema(filepath, *sqlServiceName); err != nil {
+			zlog.S.Fatal(err)
+		}
+	},
+}
+
+var sqlToDao = &cobra.Command{
+	Use:   "sql_to_dao",
+	Short: "generate sql to dao",
+	Long:  "",
+	Run: func(cmd *cobra.Command, args []string) {
+		if *sqlDir == "" {
+			*sqlDir = "."
+		}
+		pwd, _ := os.Getwd()
+		filepath := file.GetFilePath(pwd, "/"+*sqlDir)
+		if err := gen.GenerateDao(filepath, *sqlServiceName); err != nil {
+			zlog.S.Fatal(err)
+		}
+	},
 }
