@@ -200,11 +200,11 @@ func (s *Schema) String() string {
 
 	for _, m := range s.Messages {
 		m.GenDefaultMessage(buf)
-		m.GenRpcAddReqRespMessage(buf)
-		m.GenRpcUpdateReqMessage(buf)
-		m.GenRpcDelReqMessage(buf)
-		m.GenRpcGetByIdReqMessage(buf)
-		m.GenRpcSearchReqMessage(buf)
+		//m.GenRpcAddReqRespMessage(buf)
+		//m.GenRpcUpdateReqMessage(buf)
+		//	m.GenRpcDelReqMessage(buf)
+		//	m.GenRpcGetByIdReqMessage(buf)
+		//	m.GenRpcSearchReqMessage(buf)
 	}
 
 	buf.WriteString("\n")
@@ -217,17 +217,17 @@ func (s *Schema) String() string {
 	}
 
 	buf.WriteString("\n")
-	funcTpl := "service " + UpperHead(s.ServiceName) + "Server { \n\n"
-	for _, m := range s.Messages {
-		funcTpl += "\t //-----------------------" + m.Comment + "----------------------- \n"
-		funcTpl += "\t rpc Add" + m.Name + "(Add" + m.Name + "BeRequest) returns (google.protobuf.Empty); \n"
-		funcTpl += "\t rpc Update" + m.Name + "(Update" + m.Name + "BeRequest) returns (google.protobuf.Empty); \n"
-		funcTpl += "\t rpc Del" + m.Name + "(Del" + m.Name + "BeRequest) returns (Del" + m.Name + "BeResponse); \n"
-		funcTpl += "\t rpc Get" + m.Name + "ById(Get" + m.Name + "ByIdBeRequest) returns (Get" + m.Name + "ByIdBeResponse); \n"
-		funcTpl += "\t rpc Search" + m.Name + "(Query" + m.Name + "BeRequest) returns (Query" + m.Name + "BeResponse); \n"
-	}
-	funcTpl = funcTpl + "\n}"
-	buf.WriteString(funcTpl)
+	//funcTpl := "service " + UpperHead(s.ServiceName) + "Server { \n\n"
+	//for _, m := range s.Messages {
+	//	funcTpl += "\t //-----------------------" + m.Comment + "----------------------- \n"
+	//	funcTpl += "\t rpc Add" + m.Name + "(Add" + m.Name + "BeRequest) returns (google.protobuf.Empty); \n"
+	//	funcTpl += "\t rpc Update" + m.Name + "(Update" + m.Name + "BeRequest) returns (google.protobuf.Empty); \n"
+	//	funcTpl += "\t rpc Del" + m.Name + "(Del" + m.Name + "BeRequest) returns (Del" + m.Name + "BeResponse); \n"
+	//	funcTpl += "\t rpc Get" + m.Name + "ById(Get" + m.Name + "ByIdBeRequest) returns (Get" + m.Name + "ByIdBeResponse); \n"
+	//	funcTpl += "\t rpc Search" + m.Name + "(Query" + m.Name + "BeRequest) returns (Query" + m.Name + "BeResponse); \n"
+	//}
+	//funcTpl = funcTpl + "\n}"
+	//buf.WriteString(funcTpl)
 
 	return buf.String()
 }
