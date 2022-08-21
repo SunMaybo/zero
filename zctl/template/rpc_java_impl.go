@@ -4,6 +4,8 @@ const JavaRPCImplPattern = `package {{.PackageName}};
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
+import io.grpc.Context;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
@@ -16,6 +18,10 @@ public abstract class {{.ServiceName}} extends {{.GrpcFileName}}.{{.ServiceBaseN
     @Override
     public void {{$method.ReturnParam}} {{$method.Method}}({{$method.Param1}}, {{$method.Param2}}) {
  		try {        
+ 			if (Context.current().isCancelled()) {
+                responseObserver.onError(Status.CANCELLED.withDescription("Cancelled by client").asRuntimeException());
+                return;
+            }
 			responseObserver.onNext({{$method.Method}}(request));
         	responseObserver.onCompleted();
         } catch (StatusRuntimeException e) {
