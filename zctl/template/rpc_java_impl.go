@@ -28,7 +28,7 @@ public abstract class {{.ServiceName}} extends {{.GrpcFileName}}.{{.ServiceBaseN
 			try {
                 LOGGER.warn("Caller Request {{$method.Method}}======>" + JsonFormat.printer().print(request));
             } catch (InvalidProtocolBufferException ex) {
-                ex.printStackTrace();
+               	LOGGER.error("grpc caller err:",e);
             }
 			LOGGER.error("grpc caller err:",e);
             responseObserver.onError(e);
