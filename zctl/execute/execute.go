@@ -39,6 +39,8 @@ var (
 	dingTalkToken           string
 	dingTalkSecret          string
 	sqlServiceName          *string
+	isXhCloudDelay          *bool
+	isXhCloudFront          *bool
 )
 
 var genProjectCommand = &cobra.Command{
@@ -56,7 +58,7 @@ var delayFrontCommand = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := os.Getwd()
-		release.Delay(*envFront, path, false, frontWebPk, dingTalkSecret)
+		release.Delay(*envFront, path, false, frontWebPk, dingTalkSecret, *isXhCloudDelay)
 	},
 }
 var scaleFrontCommand = &cobra.Command{
@@ -65,7 +67,7 @@ var scaleFrontCommand = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := os.Getwd()
-		release.Delay("format", path, true, frontWebPk, dingTalkSecret)
+		release.Delay("format", path, true, frontWebPk, dingTalkSecret, *isXhCloudFront)
 	},
 }
 
@@ -216,6 +218,9 @@ func init() {
 
 	sqlDir = sqlToDao.Flags().String("p", "", "sql dir")
 	sqlServiceName = sqlToDao.Flags().String("s", "test", "service name")
+
+	isXhCloudDelay = delayFrontCommand.Flags().Bool("is_xh_cloud", false, "是否部署是Saas服务")
+	isXhCloudFront = scaleFrontCommand.Flags().Bool("is_xh_cloud", false, "是否部署是Saas服务")
 }
 func GetAllCommands(cfg config.Config) []*cobra.Command {
 	if *maven == "" {
