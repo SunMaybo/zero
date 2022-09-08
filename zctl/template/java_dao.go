@@ -11,13 +11,13 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 /**
- * @author fico
+ * @author system
  */
 @Repository
 public class {{.TableUpper}}Repository extends XbbRepository<{{.TableUpper}}Entity> {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
-    public MenusRepository(NamedParameterJdbcTemplate jdbcTemplate) {
+    public {{.TableUpper}}Repository(NamedParameterJdbcTemplate jdbcTemplate) {
         super(jdbcTemplate);
 
     }

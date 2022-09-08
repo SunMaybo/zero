@@ -34,7 +34,8 @@ func completer(d prompt.Document) []prompt.Suggest {
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
 
-func Delay(env string, path string, isCale bool, pk, dingTalkSecret string) {
+func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isSaas bool) {
+	fmt.Println(isSaas)
 	if pk == "" {
 		zap.S().Fatal("please config front_web_pk on .zctl.yaml")
 	}
@@ -60,7 +61,7 @@ func Delay(env string, path string, isCale bool, pk, dingTalkSecret string) {
 	}
 	zap.S().Infof("checkout current branch name is %s", branchName)
 	//3. 校验当前分支是否合法
-	if isOnline && !isCale && branchName != "master" {
+	if isOnline && !isScale && branchName != "master" {
 		zap.S().Fatal("you must publish online through the Master branch")
 	}
 	//4. 获取当前项目名称
@@ -90,7 +91,7 @@ func Delay(env string, path string, isCale bool, pk, dingTalkSecret string) {
 		secretKey = strings.Split(string(result), "-")[1]
 	}
 	//4. 线上版本打tag并上传
-	if isOnline && !isCale {
+	if isOnline && !isScale {
 		if result, err := cmd.Run("git tag release-"+version, path); err != nil {
 			zap.S().Fatalf("git tag release-%s,err:%s", version, err.Error())
 		} else {
@@ -144,7 +145,7 @@ func Delay(env string, path string, isCale bool, pk, dingTalkSecret string) {
 	}
 	currentUser, _ := user.Current()
 	username := currentUser.Username
-	if isOnline && !isCale {
+	if isOnline && !isScale {
 		err := DingTalkNew(dingTalkSecret, dingTalkToken).
 			Talk("【前端项目发布通知】", fmt.Sprintf("[*%s*同学～上线了前端---%s---项目---当前版本---%s]", username, delayDir, "release-"+version), nil, nil, true)
 		if err != nil {
@@ -158,8 +159,18 @@ func Delay(env string, path string, isCale bool, pk, dingTalkSecret string) {
 		}
 	}
 	//4. 代码上传
-	if isOnline {
-		uploadDirectoryFileTree(bucket, path+"/dist", "prod/"+delayDir)
+	if isOnline && isSaas {
+		prefix := "prod/"
+		if isSaas {
+			prefix = prefix + "fe-xbbcloud/"
+		}
+		delayDir = strings.Split(delayDir, "-")[1]
+		fmt.Println(prefix + delayDir)
+		uploadDirectoryFileTree(bucket, path+"/dist", prefix+delayDir)
+	} else if isOnline {
+		prefix := "prod/"
+		fmt.Println(prefix + delayDir + "false")
+		uploadDirectoryFileTree(bucket, path+"/dist", prefix+delayDir)
 	} else {
 		uploadDirectoryFileTree(bucket, path+"/dist", "test/"+delayDir)
 	}
