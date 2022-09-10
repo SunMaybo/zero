@@ -30,7 +30,7 @@ public abstract class {{.ServiceName}} extends {{.GrpcFileName}}.{{.ServiceBaseN
             } catch (InvalidProtocolBufferException ex) {
                	LOGGER.error("grpc caller err:",e);
             }
-			LOGGER.error("grpc caller err:",e);
+			LOGGER.warn("grpc caller err:",e);
             responseObserver.onError(e);
         }
     }
