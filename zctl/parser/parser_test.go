@@ -10,5 +10,5 @@ func TestParserJavaGrpc(t *testing.T) {
 	ParserJavaGrpc("/Users/fico/project/ins-xhwallet-platform/grpc_java/universal/src/main/java/cn/xunhou/grpc/proto/universal/UniversalServiceGrpc.java")
 }
 func TestParserSQL(t *testing.T) {
-	ParserCreatedSQL("/Users/fico/Desktop/project_pc/ins-xhportal-platform/sql")
+	ParserCreatedSQL("/Users/fico/project/java/ins-xhportal-platform/sql")
 }

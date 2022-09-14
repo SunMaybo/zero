@@ -22,6 +22,7 @@ var (
 	artifactId              *string
 	versionGrpc             *string
 	protoDir                *string
+	docSourceNewl           *string
 	altDeploymentRepository *string
 	maven                   *string
 	proxy                   *string
@@ -85,6 +86,9 @@ var genDocCommand = &cobra.Command{
 			}
 		}
 		sourceRelative := ""
+		if *docSource == "" {
+			*docSource = *docSourceNewl
+		}
 		if !strings.HasPrefix(*docSource, "/") {
 			sourceRelative = file.GetFilePath(baseDir, "/"+*docSource)
 		}
@@ -101,7 +105,7 @@ var genGrpcCommand = &cobra.Command{
 		workDir := ""
 		path, _ := os.Getwd()
 		if strings.HasPrefix(*protoDir, "/") {
-			workDir = file.GetFilePath(path, *protoDir)
+			workDir = *protoDir
 		} else {
 			workDir = file.GetFilePath(path, "/"+*protoDir)
 		}
@@ -207,6 +211,7 @@ func init() {
 	maven = genGrpcCommand.Flags().String("m", "", "maven exec path")
 
 	docSource = genDocCommand.Flags().String("s", "", "doc source")
+	docSourceNewl = genDocCommand.Flags().String("p", "", "doc source")
 	docType = genDocCommand.Flags().Int("t", 1, "doc type")
 
 	moduleHttp = golangHttpModuleCommand.Flags().String("m", "", "golang module")
@@ -278,8 +283,13 @@ var sqlToCommand = &cobra.Command{
 		if *sqlDir == "" {
 			*sqlDir = "."
 		}
-		pwd, _ := os.Getwd()
-		filepath := file.GetFilePath(pwd, "/"+*sqlDir)
+		filepath := ""
+		if !strings.HasPrefix(*sqlDir, "/") {
+			pwd, _ := os.Getwd()
+			filepath = file.GetFilePath(pwd, "/"+*sqlDir)
+		} else {
+			filepath = *sqlDir
+		}
 		if err := gen.GenerateSchema(filepath, *sqlServiceName); err != nil {
 			zlog.S.Fatal(err)
 		}
@@ -294,8 +304,13 @@ var sqlToDao = &cobra.Command{
 		if *sqlDir == "" {
 			*sqlDir = "."
 		}
-		pwd, _ := os.Getwd()
-		filepath := file.GetFilePath(pwd, "/"+*sqlDir)
+		filepath := ""
+		if !strings.HasPrefix(*sqlDir, "/") {
+			pwd, _ := os.Getwd()
+			filepath = file.GetFilePath(pwd, "/"+*sqlDir)
+		} else {
+			filepath = *sqlDir
+		}
 		if err := gen.GenerateDao(filepath, *sqlServiceName); err != nil {
 			zlog.S.Fatal(err)
 		}

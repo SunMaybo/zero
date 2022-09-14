@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"fmt"
+	"github.com/SunMaybo/zero/common/zlog"
 	"github.com/SunMaybo/zero/zctl/parser"
 	"io/ioutil"
 	"regexp"
@@ -81,7 +82,9 @@ func GenerateSchema(filepath string, serviceName string) error {
 	sort.Sort(s.Imports)
 	sort.Sort(s.Messages)
 	sort.Sort(s.Enums)
-	ioutil.WriteFile(filepath+"/"+serviceName+".proto", []byte(s.String()), 0777)
+	if err := ioutil.WriteFile(filepath+"/"+serviceName+".proto", []byte(s.String()), 0777); err != nil {
+		zlog.S.Fatal(err)
+	}
 	fmt.Println(s)
 	return nil
 }
