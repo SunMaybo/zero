@@ -115,9 +115,14 @@ func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isS
 		} else if strings.TrimSpace(confirm) != "yes" {
 			zap.S().Info("You have been terminated.")
 		}
+		// SaaS 项目 pathname
+		var saasDelayDir string
+		if isSaas {
+			saasDelayDir = strings.Split(delayDir, "-")[1]
+		}
 		if err := cmd.Execute("/bin/bash", path, func(lines string) {
 			zap.S().Info(lines)
-		}, "-c", "npm i --registry https://registry.npm.taobao.org  && npm run build --projectdir="); err != nil {
+		}, "-c", "npm i --registry https://registry.npm.taobao.org  && npm run build --projectdir="+saasDelayDir); err != nil {
 			zap.S().Fatalf("npm build err:%s", err.Error())
 		} else {
 			zap.S().Info("npm run build success")
