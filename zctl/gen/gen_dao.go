@@ -57,7 +57,7 @@ func GenerateDao(filepath string, serviceName string) error {
 			case "tinyint", "smallint", "int", "mediumint":
 				field.Type = "Integer"
 			case "double":
-				field.Type = "double"
+				field.Type = "Double"
 			case "float":
 				field.Type = "Float"
 			case "bigint":
