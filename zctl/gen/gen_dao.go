@@ -89,6 +89,8 @@ func GenerateDao(filepath string, serviceName string) error {
 			entities.Entity = "XbbTenantEntity"
 		} else if isSnowId {
 			entities.Entity = "XbbSnowEntity"
+		} else if isTimeStamp {
+			entities.Entity = "XbbTimeEntity"
 		} else {
 			entities.Entity = "XbbEntity"
 		}
