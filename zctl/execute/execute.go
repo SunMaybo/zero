@@ -42,6 +42,8 @@ var (
 	sqlServiceName          *string
 	isXhCloudDelay          *bool
 	isXhCloudFront          *bool
+	isXhCommonDelay         *bool
+	isXhCommonFront         *bool
 )
 
 var genProjectCommand = &cobra.Command{
@@ -59,7 +61,7 @@ var delayFrontCommand = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := os.Getwd()
-		release.Delay(*envFront, path, false, frontWebPk, dingTalkSecret, *isXhCloudDelay)
+		release.Delay(*envFront, path, false, frontWebPk, dingTalkSecret, *isXhCloudDelay, *isXhCommonDelay)
 	},
 }
 var scaleFrontCommand = &cobra.Command{
@@ -68,7 +70,7 @@ var scaleFrontCommand = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := os.Getwd()
-		release.Delay("format", path, true, frontWebPk, dingTalkSecret, *isXhCloudFront)
+		release.Delay("format", path, true, frontWebPk, dingTalkSecret, *isXhCloudFront, *isXhCommonFront)
 	},
 }
 
@@ -226,6 +228,8 @@ func init() {
 
 	isXhCloudDelay = delayFrontCommand.Flags().Bool("is_xh_cloud", false, "是否部署是Saas服务")
 	isXhCloudFront = scaleFrontCommand.Flags().Bool("is_xh_cloud", false, "是否部署是Saas服务")
+	isXhCommonDelay = delayFrontCommand.Flags().Bool("is_xh_common", false, "是否部署是Common服务")
+	isXhCommonFront = scaleFrontCommand.Flags().Bool("is_xh_common", false, "是否部署是Common服务")
 }
 func GetAllCommands(cfg config.Config) []*cobra.Command {
 	if *maven == "" {

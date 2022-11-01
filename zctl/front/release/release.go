@@ -34,7 +34,7 @@ func completer(d prompt.Document) []prompt.Suggest {
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
 
-func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isSaas bool) {
+func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isSaas bool, isCommon bool) {
 	fmt.Println(isSaas)
 	if pk == "" {
 		zap.S().Fatal("please config front_web_pk on .zctl.yaml")
@@ -116,13 +116,13 @@ func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isS
 			zap.S().Info("You have been terminated.")
 		}
 		// SaaS 项目 pathname
-		var saasDelayDir string
-		if isSaas {
-			saasDelayDir = strings.Split(delayDir, "-")[1]
+		var delayDir string
+		if isSaas || isCommon {
+			delayDir = strings.Split(delayDir, "-")[1]
 		}
 		if err := cmd.Execute("/bin/bash", path, func(lines string) {
 			zap.S().Info(lines)
-		}, "-c", "npm i --registry https://registry.npm.taobao.org  && npm run build --projectdir="+saasDelayDir); err != nil {
+		}, "-c", "npm i --registry https://registry.npm.taobao.org  && npm run build --projectdir="+delayDir); err != nil {
 			zap.S().Fatalf("npm build err:%s", err.Error())
 		} else {
 			zap.S().Info("npm run build success")
@@ -150,7 +150,7 @@ func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isS
 	}
 	currentUser, _ := user.Current()
 	username := currentUser.Username
-	if isOnline && !isScale {
+	if isOnline && (!isScale || !isCommon) {
 		err := DingTalkNew(dingTalkSecret, dingTalkToken).
 			Talk("【前端项目发布通知】", fmt.Sprintf("[*%s*同学～上线了前端---%s---项目---当前版本---%s]", username, delayDir, "release-"+version), nil, nil, true)
 		if err != nil {
@@ -164,10 +164,12 @@ func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isS
 		}
 	}
 	//4. 代码上传
-	if isOnline && isSaas {
+	if isOnline && (isSaas || isCommon) {
 		prefix := "prod/"
 		if isSaas {
 			prefix = prefix + "fe-xbbcloud/"
+		} else if isCommon {
+			prefix = prefix + "fe-common/"
 		}
 		delayDir = strings.Split(delayDir, "-")[1]
 		fmt.Println(prefix + delayDir)
