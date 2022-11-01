@@ -5,5 +5,5 @@ import (
 )
 
 func TestDecrypt(t *testing.T) {
-	Delay("format", ".", false, "", "", true)
+	Delay("format", ".", false, "", "", true, false)
 }
