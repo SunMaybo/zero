@@ -26,6 +26,7 @@ var envWhiteList = map[string]bool{
 	"qa86":    false,
 	"sandbox": false,
 	"format":  true,
+	"all":     false,
 }
 var dingTalkToken = "44c8b95ce7bb6fa11f674598a2c7f60e782d809e75e2dd6a475edba4d43ebf46"
 
@@ -90,6 +91,7 @@ func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isS
 		accessKey = strings.Split(string(result), "-")[0]
 		secretKey = strings.Split(string(result), "-")[1]
 	}
+	var delayDirs []string
 	//4. 线上版本打tag并上传
 	if isOnline && !isScale {
 		if result, err := cmd.Run("git tag release-"+version, path); err != nil {
@@ -104,82 +106,95 @@ func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isS
 			zap.S().Info(result)
 			zap.S().Infof("git push origin release-%s success", version)
 		}
+		delayDirs = append(delayDirs, delayDir)
 	} else {
-		delayDir = delayDir + "-" + env
-	}
-	//3. 前端项目build
-	if isOnline {
-		zap.S().Infof("Please enter Yes to confirm online project %s with version %s.", projectName, "release-"+version)
-		if confirm, err := input("ensure"); err != nil {
-			zap.S().Fatal(err)
-		} else if strings.TrimSpace(confirm) != "yes" {
-			zap.S().Info("You have been terminated.")
-		}
-		// SaaS 项目 pathname
-		var delayDir string
-		if isSaas || isCommon {
-			delayDir = strings.Split(delayDir, "-")[1]
-		}
-		if err := cmd.Execute("/bin/bash", path, func(lines string) {
-			zap.S().Info(lines)
-		}, "-c", "npm i --registry https://registry.npm.taobao.org  && npm run build --projectdir="+delayDir); err != nil {
-			zap.S().Fatalf("npm build err:%s", err.Error())
+		if "all" == env {
+			for str := range envWhiteList {
+				if strings.Contains(str, "qa") {
+					delayDirs = append(delayDirs, delayDir+"-"+str)
+				}
+			}
 		} else {
-			zap.S().Info("npm run build success")
+			delayDirs = append(delayDirs, delayDir+"-"+env)
 		}
-	} else {
-		if err := cmd.Execute("/bin/bash", path, func(lines string) {
-			zap.S().Info(lines)
-		}, "-c", "npm i --registry https://registry.npm.taobao.org  && npm run build --projectdir="+delayDir); err != nil {
-			zap.S().Fatalf("npm build err:%s", err.Error())
+	}
+	for _, delayDir := range delayDirs {
+		//3. 前端项目build
+		if isOnline {
+			zap.S().Infof("Please enter Yes to confirm online project %s with version %s.", projectName, "release-"+version)
+			if confirm, err := input("ensure"); err != nil {
+				zap.S().Fatal(err)
+			} else if strings.TrimSpace(confirm) != "yes" {
+				zap.S().Info("You have been terminated.")
+			}
+			// SaaS 项目 pathname
+			var npmDelayDir string
+			if isSaas {
+				npmDelayDir = strings.Split(delayDir, "-")[1]
+			} else if isCommon {
+				npmDelayDir = strings.Split(delayDir, "-")[1]
+			}
+			if err := cmd.Execute("/bin/bash", path, func(lines string) {
+				zap.S().Info(lines)
+			}, "-c", "npm i --registry https://registry.npm.taobao.org  && npm run build --projectdir="+npmDelayDir); err != nil {
+				zap.S().Fatalf("npm build err:%s", err.Error())
+			} else {
+				zap.S().Info("npm run build success")
+			}
 		} else {
-			zap.S().Info("npm run build success")
+			if err := cmd.Execute("/bin/bash", path, func(lines string) {
+				zap.S().Info(lines)
+			}, "-c", "npm i --registry https://registry.npm.taobao.org  && npm run build --projectdir="+delayDir); err != nil {
+				zap.S().Fatalf("npm build err:%s", err.Error())
+			} else {
+				zap.S().Info("npm run build success")
+			}
 		}
-	}
-	client, err := oss.New(endpoint, accessKey, secretKey)
-	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(-1)
-	}
+		client, err := oss.New(endpoint, accessKey, secretKey)
+		if err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(-1)
+		}
 
-	// 填写存储空间名称，例如examplebucket。
-	bucket, err := client.Bucket("xbb-site")
-	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(-1)
-	}
-	currentUser, _ := user.Current()
-	username := currentUser.Username
-	if isOnline && (!isScale || !isCommon) {
-		err := DingTalkNew(dingTalkSecret, dingTalkToken).
-			Talk("【前端项目发布通知】", fmt.Sprintf("[*%s*同学～上线了前端---%s---项目---当前版本---%s]", username, delayDir, "release-"+version), nil, nil, true)
+		// 填写存储空间名称，例如examplebucket。
+		bucket, err := client.Bucket("xbb-site")
 		if err != nil {
-			zap.S().Fatal("ding talk err abort publish")
+			fmt.Println("Error:", err)
+			os.Exit(-1)
 		}
-	} else if isOnline {
-		err := DingTalkNew(dingTalkSecret, dingTalkToken).
-			Talk("【前端项目发布通知】", fmt.Sprintf("[*%s*同学～回滚了前端---%s---项目---当前版本---%s]", username, delayDir, branchName), nil, nil, true)
-		if err != nil {
-			zap.S().Fatal("ding talk err abort publish")
+		currentUser, _ := user.Current()
+		username := currentUser.Username
+		if isOnline && (!isScale || !isCommon) {
+			err := DingTalkNew(dingTalkSecret, dingTalkToken).
+				Talk("【前端项目发布通知】", fmt.Sprintf("[*%s*同学～上线了前端---%s---项目---当前版本---%s]", username, delayDir, "release-"+version), nil, nil, true)
+			if err != nil {
+				zap.S().Fatal("ding talk err abort publish")
+			}
+		} else if isOnline {
+			err := DingTalkNew(dingTalkSecret, dingTalkToken).
+				Talk("【前端项目发布通知】", fmt.Sprintf("[*%s*同学～回滚了前端---%s---项目---当前版本---%s]", username, delayDir, branchName), nil, nil, true)
+			if err != nil {
+				zap.S().Fatal("ding talk err abort publish")
+			}
 		}
-	}
-	//4. 代码上传
-	if isOnline && (isSaas || isCommon) {
-		prefix := "prod/"
-		if isSaas {
-			prefix = prefix + "fe-xbbcloud/"
-		} else if isCommon {
-			prefix = prefix + "fe-common/"
+		//4. 代码上传
+		if isOnline && (isSaas || isCommon) {
+			prefix := "prod/"
+			if isSaas {
+				prefix = prefix + "fe-xbbcloud/"
+			} else if isCommon {
+				prefix = prefix + "fe-common/"
+			}
+			delayDir = strings.Split(delayDir, "-")[1]
+			fmt.Println(prefix + delayDir)
+			uploadDirectoryFileTree(bucket, path+"/dist", prefix+delayDir)
+		} else if isOnline {
+			prefix := "prod/"
+			fmt.Println(prefix + delayDir + "false")
+			uploadDirectoryFileTree(bucket, path+"/dist", prefix+delayDir)
+		} else {
+			uploadDirectoryFileTree(bucket, path+"/dist", "test/"+delayDir)
 		}
-		delayDir = strings.Split(delayDir, "-")[1]
-		fmt.Println(prefix + delayDir)
-		uploadDirectoryFileTree(bucket, path+"/dist", prefix+delayDir)
-	} else if isOnline {
-		prefix := "prod/"
-		fmt.Println(prefix + delayDir + "false")
-		uploadDirectoryFileTree(bucket, path+"/dist", prefix+delayDir)
-	} else {
-		uploadDirectoryFileTree(bucket, path+"/dist", "test/"+delayDir)
 	}
 	//5.线上
 	zap.S().Info("uploader success.....")
