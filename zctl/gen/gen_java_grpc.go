@@ -100,10 +100,17 @@ func javaGrpcImpl(javaGrpcDir, javaGrpcFileName string) error {
 	return nil
 }
 func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altDeploymentRepository, workDir string) {
+	_, err := cmd.Run("cp -rf "+workDir+" "+protoProjectDir+"/src/main/resources", workDir)
+	if err != nil {
+		zlog.S.Errorw("cp *.proto err", err)
+		os.Exit(-1)
+	}
 	result, err := cmd.JavaProtoExecute(workDir, protoProjectDir)
 	if err != nil {
 		zlog.S.Errorw("protoc gen java grpc error", "err", err)
 		os.Exit(-1)
+	} else {
+		zlog.S.Infow("proto gen java grpc result", "result", result)
 	}
 	err = filepath.Walk(protoProjectDir, func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
@@ -112,6 +119,7 @@ func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altD
 		if runtime.GOOS == "windows" {
 			path = strings.ReplaceAll(path, "\\", "/")
 		}
+
 		return javaGrpcImpl(strings.ReplaceAll(path, info.Name(), ""), info.Name())
 	})
 
