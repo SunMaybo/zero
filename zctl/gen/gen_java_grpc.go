@@ -1,11 +1,14 @@
 package gen
 
 import (
+	"bufio"
+	"fmt"
 	"github.com/SunMaybo/zero/common/zlog"
 	"github.com/SunMaybo/zero/zctl/cmd"
 	"github.com/SunMaybo/zero/zctl/file"
 	"github.com/SunMaybo/zero/zctl/parser"
 	"github.com/SunMaybo/zero/zctl/template"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -100,11 +103,16 @@ func javaGrpcImpl(javaGrpcDir, javaGrpcFileName string) error {
 	return nil
 }
 func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altDeploymentRepository, workDir string) {
-	_, err := cmd.Run("cp -rf "+workDir+" "+protoProjectDir+"/src/main/resources", workDir)
-	if err != nil {
-		zlog.S.Errorw("cp *.proto err", err)
-		os.Exit(-1)
-	}
+
+	filepath.Walk(workDir, func(path string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		if strings.HasSuffix(info.Name(), ".proto") {
+			CopyFile(path, protoProjectDir+"/src/main/resources/"+info.Name())
+		}
+		return nil
+	})
 	result, err := cmd.JavaProtoExecute(workDir, protoProjectDir)
 	if err != nil {
 		zlog.S.Errorw("protoc gen java grpc error", "err", err)
@@ -149,4 +157,21 @@ func genParentPom(project, groupId, artifactId, version string) (string, error) 
 		return "", err
 	}
 	return result, nil
+}
+func CopyFile(dstFilePath string, srcFilePath string) (written int64, err error) {
+	srcFile, err := os.Open(srcFilePath)
+	if err != nil {
+		fmt.Printf("打开源文件错误，错误信息=%v\n", err)
+	}
+	defer srcFile.Close()
+	reader := bufio.NewReader(srcFile)
+
+	dstFile, err := os.OpenFile(dstFilePath, os.O_WRONLY|os.O_CREATE, 0777)
+	if err != nil {
+		fmt.Printf("打开目标文件错误，错误信息=%v\n", err)
+		return
+	}
+	writer := bufio.NewWriter(dstFile)
+	defer dstFile.Close()
+	return io.Copy(writer, reader)
 }
