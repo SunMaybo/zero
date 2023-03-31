@@ -25,12 +25,6 @@ public abstract class {{.ServiceName}} extends {{.GrpcFileName}}.{{.ServiceBaseN
 			responseObserver.onNext({{$method.Method}}(request));
         	responseObserver.onCompleted();
         } catch (StatusRuntimeException e) {
-			try {
-                LOGGER.warn("Caller Request {{$method.Method}}======>" + JsonFormat.printer().print(request));
-            } catch (InvalidProtocolBufferException ex) {
-               	LOGGER.error("grpc caller err:",e);
-            }
-			LOGGER.warn("grpc caller err:",e);
             responseObserver.onError(e);
         }
     }
