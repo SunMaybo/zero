@@ -109,6 +109,13 @@ func DownloadProtoValidate() {
 		zlog.S.Errorf("%s not support", runtime.GOOS)
 		os.Exit(-1)
 	} else {
+		xbbProto := file.GetFilePath(getProtoBasePath(), "/include/xbb")
+		file.MkdirAll(xbbProto)
+		if err := file.WriterFile(file.GetFilePath(xbbProto, "/xbb.proto"), []byte(xbb_067)); err != nil {
+			zlog.S.Errorf("save xbbProto.proto err,%s,%s", xbbProto, err)
+			os.Exit(-1)
+		}
+
 		dst := file.GetFilePath(getProtoBasePath(), "/bin/protoc-gen-validate")
 		if exist, _ := file.PathExists(dst); exist {
 			zlog.S.Infof("the protoc-gen-validate already exists. If you need to download it again, delete it yourself from %s", dst)
