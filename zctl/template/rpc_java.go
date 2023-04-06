@@ -134,6 +134,11 @@ var ProtoMaven = `<?xml version="1.0" encoding="UTF-8"?>
             <artifactId>pgv-java-grpc</artifactId>
             <version>${pgv.version}</version>
         </dependency>
+   		<dependency>
+            <groupId>cn.xunhou.grpc</groupId>
+            <artifactId>xbb-proto</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
