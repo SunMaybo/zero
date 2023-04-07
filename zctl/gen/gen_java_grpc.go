@@ -109,7 +109,8 @@ func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altD
 			return nil
 		}
 		if strings.HasSuffix(info.Name(), ".proto") {
-			CopyFile(path, protoProjectDir+"/src/main/resources/"+info.Name())
+			zlog.S.Infow("cp .proto:" + path + "," + info.Name())
+			CopyFile(protoProjectDir+"/src/main/resources/"+info.Name(), path)
 		}
 		return nil
 	})
