@@ -6,6 +6,7 @@ import (
 	"github.com/SunMaybo/zero/common/zlog"
 	"github.com/SunMaybo/zero/zctl/cmd"
 	"github.com/SunMaybo/zero/zctl/file"
+	"github.com/SunMaybo/zero/zctl/install"
 	"github.com/SunMaybo/zero/zctl/parser"
 	"github.com/SunMaybo/zero/zctl/template"
 	"io"
@@ -45,8 +46,22 @@ func JavaGrpcParentProject(project, groupId, artifactId, version string) {
 func JavaGrpcPackage(project, groupId, artifactId, version string) {
 	path, _ := os.Getwd()
 	protoProject := path + "/grpc_java/" + project
+
 	if err := file.MkdirAll(file.GetFilePath(protoProject, "/src/main/java")); err != nil {
 		zlog.S.Errorw("create proto project dir error", "err", err)
+		os.Exit(-1)
+	}
+
+	if err := file.MkdirAll(file.GetFilePath(protoProject, "/src/main/java/cn/zero/grpc/proto/extend")); err != nil {
+		zlog.S.Errorw("create proto extend dir error", "err", err)
+		os.Exit(-1)
+	}
+	if err := file.WriterFile(file.GetFilePath(protoProject, "/src/main/java/cn/zero/grpc/proto/extend/Extend.java"), []byte(install.EXTEND_GRPC_CLAZZ)); err != nil {
+		zlog.S.Errorw("create Extend.java error", "err", err)
+		os.Exit(-1)
+	}
+	if err := file.WriterFile(file.GetFilePath(protoProject, "/src/main/java/cn/zero/grpc/proto/extend/ExtendValidator.java"), []byte(install.EXTEND_GRPC_VALIDATE_CLAZZ)); err != nil {
+		zlog.S.Errorw("create ExtendValidator.java error", "err", err)
 		os.Exit(-1)
 	}
 	if err := file.MkdirAll(file.GetFilePath(protoProject, "/src/main/resources")); err != nil {
