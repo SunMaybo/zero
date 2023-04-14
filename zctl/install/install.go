@@ -109,10 +109,10 @@ func DownloadProtoValidate() {
 		zlog.S.Errorf("%s not support", runtime.GOOS)
 		os.Exit(-1)
 	} else {
-		xbbProto := file.GetFilePath(getProtoBasePath(), "/include/xbb")
+		xbbProto := file.GetFilePath(getProtoBasePath(), "/include/extend")
 		file.MkdirAll(xbbProto)
-		if err := file.WriterFile(file.GetFilePath(xbbProto, "/xbb.proto"), []byte(xbb_067)); err != nil {
-			zlog.S.Errorf("save xbbProto.proto err,%s,%s", xbbProto, err)
+		if err := file.WriterFile(file.GetFilePath(xbbProto, "/extend.proto"), []byte(extend_067)); err != nil {
+			zlog.S.Errorf("save extend.proto err,%s,%s", xbbProto, err)
 			os.Exit(-1)
 		}
 
