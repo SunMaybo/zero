@@ -120,11 +120,11 @@ func (s *Server) Start() {
 	//创建监听退出chan
 	signChan := make(chan os.Signal)
 	//监听指定信号 ctrl+c kill
-	signal.Notify(signChan, os.Interrupt, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
+	signal.Notify(signChan, os.Interrupt, syscall.SIGKILL, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		for sign := range signChan {
 			switch sign {
-			case os.Interrupt, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2, syscall.SIGUSR1:
+			case os.Interrupt, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
 				s.logger.Info("receive signal", zap.String("signal", sign.String()))
 				if s.isRegister.Load() {
 					s.unRegister()
