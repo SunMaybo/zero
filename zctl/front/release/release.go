@@ -213,7 +213,7 @@ func Delay(env string, path, cdnUrl string, isScale bool, pk, cdnPk, dingTalkSec
 		if err != nil {
 			zap.S().Fatal(err)
 		}
-		zap.S().Info("refresh cdn success.....")
+		zap.S().Infof("refresh cdn[%s] success.....", cdnUrl)
 	}
 
 }
