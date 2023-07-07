@@ -5,5 +5,8 @@ import (
 )
 
 func TestDecrypt(t *testing.T) {
-	Delay("format", ".", false, "", "", true, false)
+	Delay("format", ".", "", false, "", "", "", true, false)
+}
+func TestEncrypt(t *testing.T) {
+	t.Log(EncryptByAes("xbb123:::", []byte("***REMOVED_AK***-***REMOVED_SK***")))
 }
