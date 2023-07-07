@@ -35,8 +35,7 @@ func completer(d prompt.Document) []prompt.Suggest {
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
 
-func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isSaas bool, isCommon bool) {
-	fmt.Println(isSaas)
+func Delay(env string, path, cdnUrl string, isScale bool, pk, cdnPk, dingTalkSecret string, isSaas bool, isCommon bool) {
 	if pk == "" {
 		zap.S().Fatal("please config front_web_pk on .zctl.yaml")
 	}
@@ -91,6 +90,16 @@ func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isS
 		accessKey = strings.Split(string(result), "-")[0]
 		secretKey = strings.Split(string(result), "-")[1]
 	}
+	cdnAccessKey := ""
+	cdnSecretKey := ""
+	if result, err := DecryptByAes(passowrd, cdnPk); err != nil {
+		zap.S().Fatalf("you entered the password incorrectly")
+	} else {
+		zap.S().Info("very good,please waiting......")
+		cdnAccessKey = strings.Split(string(result), "-")[0]
+		cdnSecretKey = strings.Split(string(result), "-")[1]
+	}
+
 	var delayDirs []string
 	//4. 线上版本打tag并上传
 	if isOnline && !isScale {
@@ -198,6 +207,15 @@ func Delay(env string, path string, isScale bool, pk, dingTalkSecret string, isS
 	}
 	//5.线上
 	zap.S().Info("uploader success.....")
+	if isOnline && cdnUrl != "" {
+		//6.刷新cdn
+		err = RefreshCdn(cdnUrl, cdnAccessKey, cdnSecretKey)
+		if err != nil {
+			zap.S().Fatal(err)
+		}
+		zap.S().Info("refresh cdn success.....")
+	}
+
 }
 
 type uploadFile struct {

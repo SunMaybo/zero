@@ -43,7 +43,9 @@ var (
 	isXhCloudDelay          *bool
 	isXhCloudFront          *bool
 	isXhCommonDelay         *bool
+	cdnUrl                  *string
 	isXhCommonFront         *bool
+	cdnPk                   string
 )
 
 var genProjectCommand = &cobra.Command{
@@ -61,7 +63,7 @@ var delayFrontCommand = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := os.Getwd()
-		release.Delay(*envFront, path, false, frontWebPk, dingTalkSecret, *isXhCloudDelay, *isXhCommonDelay)
+		release.Delay(*envFront, path, *cdnUrl, false, frontWebPk, cdnPk, dingTalkSecret, *isXhCloudDelay, *isXhCommonDelay)
 	},
 }
 var scaleFrontCommand = &cobra.Command{
@@ -70,7 +72,7 @@ var scaleFrontCommand = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := os.Getwd()
-		release.Delay("format", path, true, frontWebPk, dingTalkSecret, *isXhCloudFront, *isXhCommonFront)
+		release.Delay("format", path, *cdnUrl, true, frontWebPk, cdnPk, dingTalkSecret, *isXhCloudFront, *isXhCommonFront)
 	},
 }
 
@@ -220,6 +222,7 @@ func init() {
 	serviceHttp = golangHttpModuleCommand.Flags().String("s", "", "golang service")
 
 	envFront = delayFrontCommand.Flags().String("env", "qa39", "current delay env on qa、sandbox、format")
+	cdnUrl = delayFrontCommand.Flags().String("cdn_url", "", "服务地址例如:https://cdn.xh-dev.com/")
 	sqlDir = sqlToCommand.Flags().String("p", "", "sql dir")
 	sqlServiceName = sqlToCommand.Flags().String("s", "test", "service name")
 
@@ -230,6 +233,7 @@ func init() {
 	isXhCloudFront = scaleFrontCommand.Flags().Bool("is_xh_cloud", false, "是否部署是Saas服务")
 	isXhCommonDelay = delayFrontCommand.Flags().Bool("is_xh_common", false, "是否部署是Common服务")
 	isXhCommonFront = scaleFrontCommand.Flags().Bool("is_xh_common", false, "是否部署是Common服务")
+
 }
 func GetAllCommands(cfg config.Config) []*cobra.Command {
 	if *maven == "" {
@@ -244,6 +248,9 @@ func GetAllCommands(cfg config.Config) []*cobra.Command {
 	}
 	if cfg.FrontWebPk != "" {
 		frontWebPk = cfg.FrontWebPk
+	}
+	if cfg.CdnKey != "" {
+		cdnPk = cfg.CdnKey
 	}
 	if cfg.DingTalkSecret != "" {
 		dingTalkSecret = cfg.DingTalkSecret
