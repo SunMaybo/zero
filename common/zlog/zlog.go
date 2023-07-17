@@ -8,6 +8,7 @@ import (
 	"github.com/uber/jaeger-client-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -24,42 +25,68 @@ var S *zap.SugaredLogger
 var once = sync.Once{}
 
 func init() {
-	LOGGER = NewLogger(false)
+	LOGGER = NewLogger(false, "")
 	zap.ReplaceGlobals(LOGGER)
 	S = LOGGER.Sugar()
 }
 
-func InitLogger(production bool) {
+func InitLogger(production bool, fileName string) {
 	once.Do(func() {
-		LOGGER = NewLogger(production)
+		LOGGER = NewLogger(production, fileName)
 		zap.ReplaceGlobals(LOGGER)
 		S = LOGGER.Sugar()
 	})
 }
-func NewLogger(production bool) *zap.Logger {
+func NewLogger(production bool, fileName string) *zap.Logger {
 	level := zap.AtomicLevel{}
 	if production {
 		level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
 	} else {
 		level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
 	}
-	cfg := zap.Config{
-		Encoding:    "console",
-		OutputPaths: []string{"stderr"},
-		EncoderConfig: zapcore.EncoderConfig{
-			MessageKey:  "message",
-			TimeKey:     "time",
-			EncodeTime:  zapcore.RFC3339TimeEncoder,
-			LevelKey:    "level",
-			EncodeLevel: zapcore.CapitalColorLevelEncoder,
-		},
-		Level: level,
+	//cfg := zap.Config{
+	//	Encoding:    "console",
+	//	OutputPaths: []string{"stderr"},
+	//	EncoderConfig: zapcore.EncoderConfig{
+	//		MessageKey:  "message",
+	//		TimeKey:     "time",
+	//		EncodeTime:  zapcore.RFC3339TimeEncoder,
+	//		LevelKey:    "level",
+	//		EncodeLevel: zapcore.CapitalColorLevelEncoder,
+	//	},
+	//	Level: level,
+	//}
+	encoderConfig := zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
-	if logger, err := cfg.Build(); err != nil {
-		panic(err)
+	encoder := zapcore.NewJSONEncoder(encoderConfig)
+	var tee zapcore.Core
+	if fileName != "" {
+		fileSyncer := zapcore.AddSync(&lumberjack.Logger{
+			Filename:   fileName,
+			MaxSize:    500, // megabytes
+			MaxBackups: 3,
+			MaxAge:     28,    //days
+			Compress:   false, // disabled by default
+		})
+		consoleSyncer := zapcore.AddSync(os.Stdout)
+		tee = zapcore.NewTee(zapcore.NewCore(encoder, consoleSyncer, level), zapcore.NewCore(encoder, fileSyncer, level))
 	} else {
-		return logger
+		consoleSyncer := zapcore.AddSync(os.Stdout)
+		tee = zapcore.NewTee(zapcore.NewCore(encoder, consoleSyncer, level))
 	}
+	logger := zap.New(tee, zap.AddCaller())
+	return logger
 }
 func GinLogger(c context.Context, startTime time.Time, ginCtx *gin.Context) {
 	logger := WithContext(c)

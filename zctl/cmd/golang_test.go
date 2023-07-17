@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	zlog.InitLogger(false)
+	zlog.InitLogger(false, "")
 }
 
 func TestGoVersion(t *testing.T) {

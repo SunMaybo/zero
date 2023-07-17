@@ -48,7 +48,7 @@ func NewServer(cfg zcfg.ZeroConfig, options ...grpc.ServerOption) *Server {
 
 func new(cfg zcfg.ZeroConfig, options ...grpc.ServerOption) *Server {
 	// init logger
-	zlog.InitLogger(cfg.RPC.IsOnline)
+	zlog.InitLogger(cfg.RPC.IsOnline, cfg.LogFileName)
 	// setting grpc server timeout
 	if cfg.RPC.Timeout <= 0 {
 		cfg.RPC.Timeout = 5000
@@ -217,7 +217,7 @@ func (c *Client) SetTracer(tracer opentracing.Tracer) {
 	opentracing.SetGlobalTracer(tracer)
 }
 func newClient(cfg zcfg.ZeroConfig) *Client {
-	zlog.InitLogger(cfg.RPC.IsOnline)
+	zlog.InitLogger(cfg.RPC.IsOnline, cfg.LogFileName)
 	center, err := center.NewSingleCenterClient(cfg.SeverCenterConfig)
 	if err != nil {
 		zlog.S.Errorf("connection discovery center failed,err:%s", err.Error())

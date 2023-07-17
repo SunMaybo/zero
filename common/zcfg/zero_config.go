@@ -4,6 +4,7 @@ type ZeroConfig struct {
 	RPC               RpcCfg            `yaml:"rpc"`
 	SeverCenterConfig SeverCenterConfig `yaml:"center"`
 	Server            Server            `yaml:"server"`
+	LogFileName       string            `yaml:"log_filename"`
 }
 type HystrixConfigTable map[string]*HystrixConfig
 
