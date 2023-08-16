@@ -204,12 +204,18 @@ func SwitchGrpcJavaType(path string) {
 			result = append(result, item)
 			continue
 		}
+		isAppend := false
 		for k, v := range replaceMap {
 			if strings.Contains(item, k) {
 				item = strings.ReplaceAll(item, k, v)
 				result = append(result, item)
 				result = append(result, "        if (value==null) return this;")
+				isAppend = true
+				break
 			}
+		}
+		if !isAppend {
+			result = append(result, item)
 		}
 	}
 	_ = os.WriteFile(path, []byte(strings.Join(result, "\n")), 0777)
