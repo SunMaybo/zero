@@ -143,7 +143,7 @@ func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altD
 		if runtime.GOOS == "windows" {
 			path = strings.ReplaceAll(path, "\\", "/")
 		}
-
+		SwitchGrpcJavaType(path)
 		return javaGrpcImpl(strings.ReplaceAll(path, info.Name(), ""), info.Name())
 	})
 
@@ -157,6 +157,62 @@ func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altD
 		os.Exit(-1)
 	}
 	zlog.S.Infow("mvn clean deploy success")
+}
+
+var replaceMap = map[string]string{
+	"(double value)": "(java.lang.Double value)",
+	"(int value)":    "(java.lang.Integer value)",
+	"(long value)":   "(java.lang.Long value)",
+	"(float value)":  "(java.lang.Float value)",
+}
+var filterBySuffix = map[string]struct{}{
+	"Builder":   {},
+	"Validator": {},
+	"Grpc":      {},
+	"Proto":     {},
+}
+
+func SwitchGrpcJavaType(path string) {
+	for s := range filterBySuffix {
+		if strings.HasSuffix(path, s) {
+			return
+		}
+	}
+	prefix := "public Builder set"
+	buff, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	items := strings.Split(string(buff), "\n")
+	var result []string
+	for i := 0; i < len(items); i++ {
+		item := items[i]
+		if item == "" {
+			result = append(result, item)
+		} else if strings.HasPrefix(strings.TrimSpace(item), "java.lang.String value) {") {
+			if len(items) > i+2 && strings.HasPrefix(strings.TrimSpace(items[i+1]), "if (value == null) {") && strings.Contains(items[i+2], "throw new NullPointerException();") {
+				result = append(result, items[i])
+				result = append(result, items[i+1])
+				result = append(result, strings.ReplaceAll(items[i+2], "throw new NullPointerException();", "return this;"))
+				i += 2
+				continue
+			} else {
+				result = append(result, item)
+				continue
+			}
+		} else if !strings.HasPrefix(strings.TrimSpace(item), prefix) {
+			result = append(result, item)
+			continue
+		}
+		for k, v := range replaceMap {
+			if strings.Contains(item, k) {
+				item = strings.ReplaceAll(item, k, v)
+				result = append(result, item)
+				result = append(result, "        if (value==null) return this;")
+			}
+		}
+	}
+	_ = os.WriteFile(path, []byte(strings.Join(result, "\n")), 0777)
 }
 
 func JavaGrpcDeploy(mavenBinPath, mavenSettings, protoProjectDir, altDeploymentRepository string) error {
