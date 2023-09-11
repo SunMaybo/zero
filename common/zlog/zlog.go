@@ -80,10 +80,10 @@ func NewLogger(production bool, fileName string) *zap.Logger {
 			Compress:   false, // disabled by default
 		})
 		consoleSyncer := zapcore.AddSync(os.Stdout)
-		tee = zapcore.NewTee(zapcore.NewCore(encoder, consoleSyncer, level), zapcore.NewCore(encoder, fileSyncer, level))
+		tee = zapcore.NewTee(zapcore.NewCore(zapcore.NewConsoleEncoder(encoderConfig), consoleSyncer, level), zapcore.NewCore(encoder, fileSyncer, level))
 	} else {
 		consoleSyncer := zapcore.AddSync(os.Stdout)
-		tee = zapcore.NewTee(zapcore.NewCore(encoder, consoleSyncer, level))
+		tee = zapcore.NewTee(zapcore.NewCore(zapcore.NewConsoleEncoder(encoderConfig), consoleSyncer, level))
 	}
 	logger := zap.New(tee, zap.AddCaller())
 	return logger
