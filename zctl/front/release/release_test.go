@@ -16,7 +16,7 @@ func TestEncrypt(t *testing.T) {
 
 func TestUploadCompanyWebsite(t *testing.T) {
 	endpoint := "oss-cn-beijing.aliyuncs.com"
-	client, err := oss.New(endpoint, "LTAI5tELM1GW19ezt88VCxVG", "NPZCY9FLUWcNF9p6MhAhukYcUQsCZX")
+	client, err := oss.New(endpoint, "", "")
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(-1)
