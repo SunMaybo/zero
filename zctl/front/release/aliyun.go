@@ -37,7 +37,7 @@ func RefreshCdn(url, ak, sk string) (_err error) {
 	}
 
 	refreshObjectCachesRequest := &cdn20180510.RefreshObjectCachesRequest{
-		ObjectType: tea.String("File"),
+		ObjectType: tea.String("Directory"),
 		ObjectPath: tea.String(url),
 	}
 	runtime := &util.RuntimeOptions{}
