@@ -8,6 +8,7 @@ import (
 	"github.com/c-bata/go-prompt"
 	"go.uber.org/zap"
 	"io/fs"
+	"log"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -37,65 +38,65 @@ func completer(d prompt.Document) []prompt.Suggest {
 
 func Delay(env string, path, cdnUrl string, isScale bool, pk, cdnPk, dingTalkSecret string, isSaas bool, isCommon bool) {
 	if pk == "" {
-		zap.S().Fatal("please config front_web_pk on .zctl.yaml")
+		log.Println("please config front_web_pk on .zctl.yaml")
 	}
 	if dingTalkSecret == "" {
-		zap.S().Fatal("please config ding_talk_secret on .zctl.yaml")
+		log.Fatal("please config ding_talk_secret on .zctl.yaml")
 	}
 	env = strings.TrimSpace(env)
 	//1. 指定环境
 	//2. 校验环境白名单
 	var ok, isOnline bool
 	if isOnline, ok = envWhiteList[strings.ToLower(env)]; !ok {
-		zap.S().Fatal("current env is no existed")
+		log.Fatal("current env is no existed")
 	}
 	if isOnline {
-		zap.S().Infow("check your env is online", "evn", env)
+		log.Println("check your env is online", "evn", env)
 	} else {
-		zap.S().Infow("check your env is offline", "evn", env)
+		log.Println("check your env is offline", "evn", env)
 	}
 
 	branchName := getGitBranchName(path)
 	if branchName == "" {
-		zap.S().Fatal("current branch is nil errs")
+		log.Fatal("current branch is nil errs")
 	}
-	zap.S().Infof("checkout current branch name is %s", branchName)
+	log.Println("checkout current branch name is " + branchName)
 	//3. 校验当前分支是否合法
 	if isOnline && !isScale && branchName != "master" {
-		zap.S().Fatal("you must publish online through the Master branch")
+		log.Fatal("you must publish online through the Master branch")
 	}
 	//4. 获取当前项目名称
 
 	projectName := getProjectName(path)
 	if projectName == "" {
-		zap.S().Fatal("git project name err")
+		log.Fatal("git project name err")
 	}
-	zap.S().Infof("checkout current project name is %s", projectName)
+	log.Println("checkout current project name is " + projectName)
 	delayDir := projectName
 	version := time.Now().Format("01021504")
-	zap.S().Info("please input your password")
+	log.Println("please input your password")
 
 	passowrd := ""
 	var err error
 	if passowrd, err = input("password"); err != nil {
-		zap.S().Fatal(err)
+		log.Fatal(err)
 	}
 	accessKey := ""
 	secretKey := ""
 	endpoint := "oss-cn-beijing.aliyuncs.com"
 	if result, err := DecryptByAes(passowrd, pk); err != nil || !strings.Contains(string(result), "xbbossuploader") {
-		zap.S().Fatalf("you entered the password incorrectly")
+		log.Fatalf("you entered the password incorrectly")
 	} else {
-		zap.S().Info("very good,please waiting......")
+		log.Println("very good,please waiting......")
 		accessKey = strings.Split(string(result), "-")[0]
 		secretKey = strings.Split(string(result), "-")[1]
 	}
 	cdnAccessKey := ""
 	cdnSecretKey := ""
 	if result, err := DecryptByAes(passowrd, cdnPk); err != nil {
-		zap.S().Fatalf("you entered the password incorrectly")
+		log.Fatalf("you entered the password incorrectly")
 	} else {
-		zap.S().Info("very good,please waiting......")
+		log.Println("very good,please waiting......")
 		cdnAccessKey = strings.Split(string(result), "-")[0]
 		cdnSecretKey = strings.Split(string(result), "-")[1]
 	}
@@ -104,16 +105,16 @@ func Delay(env string, path, cdnUrl string, isScale bool, pk, cdnPk, dingTalkSec
 	//4. 线上版本打tag并上传
 	if isOnline && !isScale {
 		if result, err := cmd.Run("git tag release-"+version, path); err != nil {
-			zap.S().Fatalf("git tag release-%s,err:%s", version, err.Error())
+			log.Fatalf("git tag release-%s,err:%s", version, err.Error())
 		} else {
-			zap.S().Info(result)
-			zap.S().Infof("git tag release-%s success", version)
+			log.Println(result)
+			log.Println("git tag release-%s success " + version)
 		}
 		if result, err := cmd.Run("git push origin release-"+version, path); err != nil {
-			zap.S().Fatalf("git push origin release-%s,err:%s", version, err.Error())
+			log.Fatalf("git push origin release-%s,err:%s", version, err.Error())
 		} else {
-			zap.S().Info(result)
-			zap.S().Infof("git push origin release-%s success", version)
+			log.Println(result)
+			log.Println("git push origin release-%s success " + version)
 		}
 		delayDirs = append(delayDirs, delayDir)
 	} else {
@@ -130,11 +131,11 @@ func Delay(env string, path, cdnUrl string, isScale bool, pk, cdnPk, dingTalkSec
 	for _, delayDir := range delayDirs {
 		//3. 前端项目build
 		if isOnline {
-			zap.S().Infof("Please enter Yes to confirm online project %s with version %s.", projectName, "release-"+version)
+			log.Printf("Please enter Yes to confirm online project %s with version %s.", projectName, "release-"+version)
 			if confirm, err := input("ensure"); err != nil {
-				zap.S().Fatal(err)
+				log.Fatal(err)
 			} else if strings.TrimSpace(confirm) != "yes" {
-				zap.S().Info("You have been terminated.")
+				log.Println("You have been terminated.")
 			}
 			// SaaS 项目 pathname
 			var npmDelayDir string
@@ -144,31 +145,31 @@ func Delay(env string, path, cdnUrl string, isScale bool, pk, cdnPk, dingTalkSec
 				npmDelayDir = strings.Split(delayDir, "-")[1]
 			}
 			if err := cmd.Execute("/bin/bash", path, func(lines string) {
-				zap.S().Info(lines)
+				log.Println(lines)
 			}, "-c", "npm i --registry https://registry.npm.taobao.org  && npm run build --projectdir="+npmDelayDir); err != nil {
-				zap.S().Fatalf("npm build err:%s", err.Error())
+				log.Fatalf("npm build err:%s", err.Error())
 			} else {
-				zap.S().Info("npm run build success")
+				log.Println("npm run build success")
 			}
 		} else {
 			if err := cmd.Execute("/bin/bash", path, func(lines string) {
-				zap.S().Info(lines)
+				log.Println(lines)
 			}, "-c", "npm i --registry https://registry.npm.taobao.org  && npm run build --projectdir="+delayDir); err != nil {
-				zap.S().Fatalf("npm build err:%s", err.Error())
+				log.Fatalf("npm build err:%s", err.Error())
 			} else {
-				zap.S().Info("npm run build success")
+				log.Println("npm run build success")
 			}
 		}
 		client, err := oss.New(endpoint, accessKey, secretKey)
 		if err != nil {
-			fmt.Println("Error:", err)
+			log.Println("Error:", err)
 			os.Exit(-1)
 		}
 
 		// 填写存储空间名称，例如examplebucket。
 		bucket, err := client.Bucket("xbb-site")
 		if err != nil {
-			fmt.Println("Error:", err)
+			log.Fatalf("Error:%v", err)
 			os.Exit(-1)
 		}
 		currentUser, _ := user.Current()
@@ -177,13 +178,13 @@ func Delay(env string, path, cdnUrl string, isScale bool, pk, cdnPk, dingTalkSec
 			err := DingTalkNew(dingTalkSecret, dingTalkToken).
 				Talk("【前端项目发布通知】", fmt.Sprintf("[*%s*同学～上线了前端---%s---项目---当前版本---%s]", username, delayDir, "release-"+version), nil, nil, true)
 			if err != nil {
-				zap.S().Fatal("ding talk err abort publish")
+				log.Fatal("ding talk err abort publish")
 			}
 		} else if isOnline {
 			err := DingTalkNew(dingTalkSecret, dingTalkToken).
 				Talk("【前端项目发布通知】", fmt.Sprintf("[*%s*同学～回滚了前端---%s---项目---当前版本---%s]", username, delayDir, branchName), nil, nil, true)
 			if err != nil {
-				zap.S().Fatal("ding talk err abort publish")
+				log.Fatal("ding talk err abort publish")
 			}
 		}
 		//4. 代码上传
@@ -211,9 +212,9 @@ func Delay(env string, path, cdnUrl string, isScale bool, pk, cdnPk, dingTalkSec
 		//6.刷新cdn
 		err = RefreshCdn(cdnUrl, cdnAccessKey, cdnSecretKey)
 		if err != nil {
-			zap.S().Fatal(err)
+			log.Fatal(err)
 		}
-		zap.S().Infof("refresh cdn[%s] success.....", cdnUrl)
+		log.Printf("refresh cdn[%s] success.....", cdnUrl)
 	}
 
 }
