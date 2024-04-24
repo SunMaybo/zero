@@ -1,0 +1,91 @@
+syntax = "proto3";
+package extend;
+
+option java_package = "cn.zero.grpc.proto.extend";
+
+import "google/protobuf/descriptor.proto";
+
+import "validate/validate.proto";
+
+
+//枚举名字定义
+extend google.protobuf.EnumValueOptions{
+  string name_enum = 2000;
+}
+
+
+//雪花ID对应通用请求声明
+message SnowIdBeRequest{
+  sfixed64 id = 1 [(validate.rules).sfixed64.gt = 0];
+}
+message SnowIdBeResponse{
+  sfixed64  id = 1;
+}
+//薪班班ID对应通用请求声明
+message IdBeRequest{
+  int32 id = 1 [(validate.rules).int32.gt = 0];
+}
+message IdBeResponse{
+  int32  id = 1;
+}
+
+enum Enable{
+  ENABLED = 0;
+  DISABLE = 1;
+}
+
+enum Deleted{
+  UN_DELETED = 0;
+  DELETED = 1;
+}
+
+
+// 来源信息
+message SourceInfo{
+  // 产品线id
+  uint32 product_id = 1[(validate.rules).uint32 = {gt: 0}];
+  // 区域划分
+  oneof scope{
+    // 应用id(ToC产品应用id)
+    uint32 app_id = 2[(validate.rules).uint32 = {gt: 0}];
+    // 租户id(SaaS产品租户id)
+    uint32 tenant_id = 3[(validate.rules).uint32 = {gt: 0}];
+  }
+  // 来源场景，通过数据字典维护
+  string source_scene = 4[(validate.rules).string = {min_len: 1, max_len: 32}];
+  // 来源类型，通过数据字典维护
+  string source_type = 5[(validate.rules).string = {min_len: 1, max_len: 32}];
+  // 来源id，关联对应的业务信息
+  string source_id = 6[(validate.rules).string = {min_len: 1, max_len: 32}];
+}
+// scope对应的表应该有这几个字段
+// 1. scope_type varchar(32) C 、 B ...
+// 2. scope_id varchar(32) appId 、 tenantId ...
+// 操作人信息
+message OperatorInfo{
+  // 操作人的类型
+  EnumOperatorType operator_type = 1;
+  // 操作人的id
+  string operator_id = 2[(validate.rules).string = {min_len: 0, max_len: 32}];
+}
+// 扩展标签信息
+message Labels{
+  string label1 = 1 [(validate.rules).string = {min_len: 0, max_len: 32}];
+  string label2 = 2 [(validate.rules).string = {min_len: 0, max_len: 32}];
+  string label3 = 3 [(validate.rules).string = {min_len: 0, max_len: 32}];
+  string label4 = 4 [(validate.rules).string = {min_len: 0, max_len: 32}];
+  string label5 = 5 [(validate.rules).string = {min_len: 0, max_len: 32}];
+}
+// 操作人类型
+enum EnumOperatorType{
+  // 未知
+  OPERATOR_TYPE_UNKNOWN = 0[(extend.name_enum) = "未知"];
+  // portal账号
+  OPERATOR_TYPE_ACCOUNT = 1[(extend.name_enum) = "账号"];
+  // C端用户账号
+  OPERATOR_TYPE_CACCOUNT = 2[(extend.name_enum) = "C端账号"];
+  // 管理员
+  OPERATOR_TYPE_ADMIN = 3[(extend.name_enum) = "管理员"];
+  // 系统
+  OPERATOR_TYPE_SYSTEM = 4[(extend.name_enum) = "系统"];
+}
