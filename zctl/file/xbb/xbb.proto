@@ -1,42 +1,42 @@
 syntax = "proto3";
-package extend;
+package xbb;
 
-option java_package = "cn.zero.grpc.proto.extend";
+option java_package = "cn.zero.grpc.proto.xbb";
 
 import "google/protobuf/descriptor.proto";
 
 import "validate/validate.proto";
 
 
-//枚举名字定义
+//薪班班枚举名字定义
 extend google.protobuf.EnumValueOptions{
   string name_enum = 2000;
 }
 
 
-//雪花ID对应通用请求声明
-message SnowIdBeRequest{
+//薪班班雪花ID对应通用请求声明
+message XbbSnowIdBeRequest{
   sfixed64 id = 1 [(validate.rules).sfixed64.gt = 0];
 }
-message SnowIdBeResponse{
+message XbbSnowIdBeResponse{
   sfixed64  id = 1;
 }
 //薪班班ID对应通用请求声明
-message IdBeRequest{
+message XbbIdBeRequest{
   int32 id = 1 [(validate.rules).int32.gt = 0];
 }
-message IdBeResponse{
+message XbbIdBeResponse{
   int32  id = 1;
 }
 
-enum Enable{
-  ENABLED = 0;
-  DISABLE = 1;
+enum XbbEnable{
+  XBB_ENABLED = 0;
+  XBB_DISABLE = 1;
 }
 
-enum Deleted{
-  UN_DELETED = 0;
-  DELETED = 1;
+enum XbbDeleted{
+  XBB_UN_DELETED = 0;
+  XBB_DELETED = 1;
 }
 
 
@@ -79,13 +79,13 @@ message Labels{
 // 操作人类型
 enum EnumOperatorType{
   // 未知
-  OPERATOR_TYPE_UNKNOWN = 0[(extend.name_enum) = "未知"];
+  OPERATOR_TYPE_UNKNOWN = 0;
   // portal账号
-  OPERATOR_TYPE_ACCOUNT = 1[(extend.name_enum) = "账号"];
+  OPERATOR_TYPE_ACCOUNT = 1;
   // C端用户账号
-  OPERATOR_TYPE_CACCOUNT = 2[(extend.name_enum) = "C端账号"];
+  OPERATOR_TYPE_CACCOUNT = 2;
   // 管理员
-  OPERATOR_TYPE_ADMIN = 3[(extend.name_enum) = "管理员"];
+  OPERATOR_TYPE_ADMIN = 3;
   // 系统
-  OPERATOR_TYPE_SYSTEM = 4[(extend.name_enum) = "系统"];
+  OPERATOR_TYPE_SYSTEM = 4;
 }
