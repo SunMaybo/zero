@@ -64,6 +64,20 @@ func JavaGrpcPackage(project, groupId, artifactId, version string) {
 		zlog.S.Errorw("create ExtendValidator.java error", "err", err)
 		os.Exit(-1)
 	}
+
+	if err := file.MkdirAll(file.GetFilePath(protoProject, "/src/main/java/cn/zero/grpc/proto/xbb")); err != nil {
+		zlog.S.Errorw("create proto extend dir error", "err", err)
+		os.Exit(-1)
+	}
+	if err := file.WriterFile(file.GetFilePath(protoProject, "/src/main/java/cn/zero/grpc/proto/xbb/Xbb.java"), []byte(install.XBB_GRPC_CLAZZ)); err != nil {
+		zlog.S.Errorw("create Extend.java error", "err", err)
+		os.Exit(-1)
+	}
+	if err := file.WriterFile(file.GetFilePath(protoProject, "/src/main/java/cn/zero/grpc/proto/xbb/XbbValidator.java"), []byte(install.XBB_VALIDATE_CLAZZ)); err != nil {
+		zlog.S.Errorw("create ExtendValidator.java error", "err", err)
+		os.Exit(-1)
+	}
+
 	if err := file.MkdirAll(file.GetFilePath(protoProject, "/src/main/resources")); err != nil {
 		zlog.S.Errorw("create proto project dir error", "err", err)
 		os.Exit(-1)

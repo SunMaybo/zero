@@ -1,0 +1,40 @@
+syntax = "proto3";
+package extend;
+
+option java_package = "cn.zero.grpc.proto.extend";
+
+import "google/protobuf/descriptor.proto";
+
+import "validate/validate.proto";
+
+
+//枚举名字定义
+extend google.protobuf.EnumValueOptions{
+  string name_enum = 2000;
+}
+
+
+//雪花ID对应通用请求声明
+message SnowIdBeRequest{
+  sfixed64 id = 1 [(validate.rules).sfixed64.gt = 0];
+}
+message SnowIdBeResponse{
+  sfixed64  id = 1;
+}
+//薪班班ID对应通用请求声明
+message IdBeRequest{
+  int32 id = 1 [(validate.rules).int32.gt = 0];
+}
+message IdBeResponse{
+  int32  id = 1;
+}
+
+enum Enable{
+  ENABLED = 0;
+  DISABLE = 1;
+}
+
+enum Deleted{
+  UN_DELETED = 0;
+  DELETED = 1;
+}
