@@ -8,37 +8,6 @@ import "google/protobuf/descriptor.proto";
 import "validate/validate.proto";
 
 
-//薪班班枚举名字定义
-extend google.protobuf.EnumValueOptions{
-  string name_enum = 2000;
-}
-
-
-//薪班班雪花ID对应通用请求声明
-message XbbSnowIdBeRequest{
-  sfixed64 id = 1 [(validate.rules).sfixed64.gt = 0];
-}
-message XbbSnowIdBeResponse{
-  sfixed64  id = 1;
-}
-//薪班班ID对应通用请求声明
-message XbbIdBeRequest{
-  int32 id = 1 [(validate.rules).int32.gt = 0];
-}
-message XbbIdBeResponse{
-  int32  id = 1;
-}
-
-enum XbbEnable{
-  XBB_ENABLED = 0;
-  XBB_DISABLE = 1;
-}
-
-enum XbbDeleted{
-  XBB_UN_DELETED = 0;
-  XBB_DELETED = 1;
-}
-
 
 // 来源信息
 message SourceInfo{
