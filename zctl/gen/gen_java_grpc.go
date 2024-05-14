@@ -157,7 +157,7 @@ func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altD
 		if runtime.GOOS == "windows" {
 			path = strings.ReplaceAll(path, "\\", "/")
 		}
-		SwitchGrpcJavaType(path)
+		//SwitchGrpcJavaType(path)
 		return javaGrpcImpl(strings.ReplaceAll(path, info.Name(), ""), info.Name())
 	})
 
