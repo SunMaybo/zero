@@ -182,12 +182,12 @@ var replaceMap = map[string]string{
 }
 
 var appendFuncMap = map[string]string{
-	"(double value)":  "public Builder %sValue(java.lang.Double value) {if (value==null) return this;return %s(value);}",
-	"(int value)":     "public Builder %sValue(java.lang.Integer value) {if (value==null) return this;return %s(value);}",
-	"(long value)":    "public Builder %sValue(java.lang.Long value) {if (value==null) return this;return %s(value);}",
-	"(float value)":   "public Builder %sValue(java.lang.Float value) {if (value==null) return this;return %s(value);}",
-	"(boolean value)": "public Builder %sValue(java.lang.Boolean value) {if (value==null) return this;return %s(value);}",
-	"String":          "public Builder %sValue(java.lang.String value) {if (value==null) return this;return %s(value);}",
+	"(double value)":  "public Builder %sVal(java.lang.Double value) {if (value==null) return this;return %s(value);}",
+	"(int value)":     "public Builder %sVal(java.lang.Integer value) {if (value==null) return this;return %s(value);}",
+	"(long value)":    "public Builder %sVal(java.lang.Long value) {if (value==null) return this;return %s(value);}",
+	"(float value)":   "public Builder %sVal(java.lang.Float value) {if (value==null) return this;return %s(value);}",
+	"(boolean value)": "public Builder %sVal(java.lang.Boolean value) {if (value==null) return this;return %s(value);}",
+	"String":          "public Builder %sVal(java.lang.String value) {if (value==null) return this;return %s(value);}",
 }
 
 var filterBySuffix = map[string]struct{}{
