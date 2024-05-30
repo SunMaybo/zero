@@ -236,7 +236,7 @@ func SwitchGrpcJavaType(path string) {
 		}
 		isAppend := false
 		for k := range replaceMap {
-			if strings.Contains(item, k) && strings.HasPrefix(item, prefix) {
+			if strings.Contains(item, k) && strings.Contains(item, prefix) {
 				if name, isOk := parseFuncName(item); isOk {
 					appendFunc = append(appendFunc, fmt.Sprintf(appendFuncMap[k], name, name))
 				}
@@ -254,7 +254,7 @@ func SwitchGrpcJavaType(path string) {
 }
 func parseFuncName(item string) (string, bool) {
 	if strings.Contains(item, prefix) {
-		beginIdx := strings.Index(item, prefix)
+		beginIdx := strings.Index(item, prefix) + len(prefix)
 		if beginIdx <= 0 {
 			return "", false
 		}
