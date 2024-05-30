@@ -174,18 +174,20 @@ func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altD
 }
 
 var replaceMap = map[string]string{
-	"(double value)": "(java.lang.Double value)",
-	"(int value)":    "(java.lang.Integer value)",
-	"(long value)":   "(java.lang.Long value)",
-	"(float value)":  "(java.lang.Float value)",
+	"(double value)":  "(java.lang.Double value)",
+	"(int value)":     "(java.lang.Integer value)",
+	"(long value)":    "(java.lang.Long value)",
+	"(float value)":   "(java.lang.Float value)",
+	"(boolean value)": "(java.lang.Float value)",
 }
 
 var appendFuncMap = map[string]string{
-	"(double value)": "public Builder %sValue(java.lang.Double value) {if (value==null) return this;return %s(value);}",
-	"(int value)":    "public Builder %sValue(java.lang.Integer value) {if (value==null) return this;return %s(value);}",
-	"(long value)":   "public Builder %sValue(java.lang.Long value) {if (value==null) return this;return %s(value);}",
-	"(float value)":  "public Builder %sValue(java.lang.Float value) {if (value==null) return this;return %s(value);}",
-	"String":         "public Builder %sValue(java.lang.String value) {if (value==null) return this;return %s(value);}",
+	"(double value)":  "public Builder %sValue(java.lang.Double value) {if (value==null) return this;return %s(value);}",
+	"(int value)":     "public Builder %sValue(java.lang.Integer value) {if (value==null) return this;return %s(value);}",
+	"(long value)":    "public Builder %sValue(java.lang.Long value) {if (value==null) return this;return %s(value);}",
+	"(float value)":   "public Builder %sValue(java.lang.Float value) {if (value==null) return this;return %s(value);}",
+	"(boolean value)": "public Builder %sValue(java.lang.Boolean value) {if (value==null) return this;return %s(value);}",
+	"String":          "public Builder %sValue(java.lang.String value) {if (value==null) return this;return %s(value);}",
 }
 
 var filterBySuffix = map[string]struct{}{
@@ -234,7 +236,7 @@ func SwitchGrpcJavaType(path string) {
 		}
 		isAppend := false
 		for k := range replaceMap {
-			if strings.Contains(item, k) {
+			if strings.Contains(item, k) && strings.HasPrefix(item, prefix) {
 				if name, isOk := parseFuncName(item); isOk {
 					appendFunc = append(appendFunc, fmt.Sprintf(appendFuncMap[k], name, name))
 				}
