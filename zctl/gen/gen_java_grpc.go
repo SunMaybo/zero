@@ -210,7 +210,6 @@ func SwitchGrpcJavaType(path string) {
 	if err != nil {
 		return
 	}
-	var appendFunc []string
 	items := strings.Split(string(buff), "\n")
 	var result []string
 	for i := 0; i < len(items); i++ {
@@ -222,7 +221,7 @@ func SwitchGrpcJavaType(path string) {
 				result = append(result, items[i])
 				result = append(result, items[i+1])
 				if name, isOk := parseFuncName(item); isOk {
-					appendFunc = append(appendFunc, fmt.Sprintf(appendFuncMap["String"], name, name))
+					result = append(result, fmt.Sprintf(appendFuncMap["String"], name, name))
 				}
 				i += 2
 				continue
@@ -238,7 +237,7 @@ func SwitchGrpcJavaType(path string) {
 		for k := range replaceMap {
 			if strings.Contains(item, k) && strings.Contains(item, prefix) {
 				if name, isOk := parseFuncName(item); isOk {
-					appendFunc = append(appendFunc, fmt.Sprintf(appendFuncMap[k], name, name))
+					result = append(result, fmt.Sprintf(appendFuncMap[k], name, name))
 				}
 				result = append(result, item)
 				isAppend = true
@@ -249,7 +248,6 @@ func SwitchGrpcJavaType(path string) {
 			result = append(result, item)
 		}
 	}
-	result = append(result, appendFunc...)
 	_ = os.WriteFile(path, []byte(strings.Join(result, "\n")), 0777)
 }
 func parseFuncName(item string) (string, bool) {
