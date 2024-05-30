@@ -185,6 +185,7 @@ var appendFuncMap = map[string]string{
 	"(int value)":    "public Builder %sValue(java.lang.Integer value) {if (value==null) return this;return %s(value);}",
 	"(long value)":   "public Builder %sValue(java.lang.Long value) {if (value==null) return this;return %s(value);}",
 	"(float value)":  "public Builder %sValue(java.lang.Float value) {if (value==null) return this;return %s(value);}",
+	"String":         "public Builder %sValue(java.lang.String value) {if (value==null) return this;return %s(value);}",
 }
 
 var filterBySuffix = map[string]struct{}{
@@ -218,7 +219,9 @@ func SwitchGrpcJavaType(path string) {
 			if len(items) > i+2 && strings.HasPrefix(strings.TrimSpace(items[i+1]), "if (value == null) {") && strings.Contains(items[i+2], "throw new NullPointerException();") {
 				result = append(result, items[i])
 				result = append(result, items[i+1])
-				result = append(result, strings.ReplaceAll(items[i+2], "throw new NullPointerException();", "return this;"))
+				if name, isOk := parseFuncName(item); isOk {
+					appendFunc = append(appendFunc, fmt.Sprintf(appendFuncMap["String"], name, name))
+				}
 				i += 2
 				continue
 			} else {
@@ -258,7 +261,7 @@ func parseFuncName(item string) (string, bool) {
 		if endIdx <= 0 {
 			return "", false
 		}
-		return item[:endIdx], true
+		return "set" + item[:endIdx], true
 	}
 	return "", false
 }
