@@ -157,7 +157,7 @@ func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altD
 		if runtime.GOOS == "windows" {
 			path = strings.ReplaceAll(path, "\\", "/")
 		}
-		//SwitchGrpcJavaType(path)
+		SwitchGrpcJavaType(path)
 		return javaGrpcImpl(strings.ReplaceAll(path, info.Name(), ""), info.Name())
 	})
 
@@ -179,6 +179,14 @@ var replaceMap = map[string]string{
 	"(long value)":   "(java.lang.Long value)",
 	"(float value)":  "(java.lang.Float value)",
 }
+
+var appendFuncMap = map[string]string{
+	"(double value)": "public Builder %sValue(java.lang.Double value) {if (value==null) return this;return %s(value);}",
+	"(int value)":    "public Builder %sValue(java.lang.Integer value) {if (value==null) return this;return %s(value);}",
+	"(long value)":   "public Builder %sValue(java.lang.Long value) {if (value==null) return this;return %s(value);}",
+	"(float value)":  "public Builder %sValue(java.lang.Float value) {if (value==null) return this;return %s(value);}",
+}
+
 var filterBySuffix = map[string]struct{}{
 	"Builder":   {},
 	"Validator": {},
@@ -186,17 +194,20 @@ var filterBySuffix = map[string]struct{}{
 	"Proto":     {},
 }
 
+const prefix = "public Builder set"
+
 func SwitchGrpcJavaType(path string) {
 	for s := range filterBySuffix {
 		if strings.HasSuffix(path, s) {
 			return
 		}
 	}
-	prefix := "public Builder set"
+
 	buff, err := os.ReadFile(path)
 	if err != nil {
 		return
 	}
+	var appendFunc []string
 	items := strings.Split(string(buff), "\n")
 	var result []string
 	for i := 0; i < len(items); i++ {
@@ -219,11 +230,12 @@ func SwitchGrpcJavaType(path string) {
 			continue
 		}
 		isAppend := false
-		for k, v := range replaceMap {
+		for k := range replaceMap {
 			if strings.Contains(item, k) {
-				item = strings.ReplaceAll(item, k, v)
+				if name, isOk := parseFuncName(item); isOk {
+					appendFunc = append(appendFunc, fmt.Sprintf(appendFuncMap[k], name, name))
+				}
 				result = append(result, item)
-				result = append(result, "        if (value==null) return this;")
 				isAppend = true
 				break
 			}
@@ -232,7 +244,23 @@ func SwitchGrpcJavaType(path string) {
 			result = append(result, item)
 		}
 	}
+	result = append(result, appendFunc...)
 	_ = os.WriteFile(path, []byte(strings.Join(result, "\n")), 0777)
+}
+func parseFuncName(item string) (string, bool) {
+	if strings.Contains(item, prefix) {
+		beginIdx := strings.Index(item, prefix)
+		if beginIdx <= 0 {
+			return "", false
+		}
+		item = item[beginIdx:]
+		endIdx := strings.Index(item, "(")
+		if endIdx <= 0 {
+			return "", false
+		}
+		return item[:endIdx], true
+	}
+	return "", false
 }
 
 func JavaGrpcDeploy(mavenBinPath, mavenSettings, protoProjectDir, altDeploymentRepository string) error {
