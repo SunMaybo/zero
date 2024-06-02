@@ -216,19 +216,11 @@ func SwitchGrpcJavaType(path string) {
 		item := items[i]
 		if item == "" {
 			result = append(result, item)
-		} else if strings.HasPrefix(strings.TrimSpace(item), "java.lang.String value) {") {
-			if len(items) > i+2 && strings.HasPrefix(strings.TrimSpace(items[i+1]), "if (value == null) {") && strings.Contains(items[i+2], "throw new NullPointerException();") {
-				result = append(result, items[i])
-				result = append(result, items[i+1])
-				if name, isOk := parseFuncName(item); isOk {
-					result = append(result, fmt.Sprintf(appendFuncMap["String"], name, name))
-				}
-				i += 2
-				continue
-			} else {
-				result = append(result, item)
-				continue
-			}
+		} else if name, isOk := parseFuncName(item); isOk && strings.HasPrefix(strings.TrimSpace(items[i+1]), "java.lang.String value) {") {
+			result = append(result, fmt.Sprintf(appendFuncMap["String"], name, name))
+			result = append(result, "@Deprecated")
+			result = append(result, item)
+			continue
 		} else if !strings.HasPrefix(strings.TrimSpace(item), prefix) {
 			result = append(result, item)
 			continue
@@ -239,6 +231,7 @@ func SwitchGrpcJavaType(path string) {
 				if name, isOk := parseFuncName(item); isOk {
 					result = append(result, fmt.Sprintf(appendFuncMap[k], name, name))
 				}
+				result = append(result, "@Deprecated")
 				result = append(result, item)
 				isAppend = true
 				break
