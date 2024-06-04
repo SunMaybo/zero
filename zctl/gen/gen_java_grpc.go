@@ -199,6 +199,14 @@ var filterBySuffix = map[string]struct{}{
 
 const prefix = "public Builder set"
 
+const prefixAdd = "public Builder addAll"
+const prefixAdd1 = "java.lang.Iterable"
+
+const prefixPut = "public Builder putAll"
+const prefixPut1 = "java.util.Map"
+
+const allowAppend = " if (values == null) return this;"
+
 func SwitchGrpcJavaType(path string) {
 	for s := range filterBySuffix {
 		if strings.HasSuffix(path, s) {
@@ -223,6 +231,15 @@ func SwitchGrpcJavaType(path string) {
 			continue
 		} else if !strings.HasPrefix(strings.TrimSpace(item), prefix) {
 			result = append(result, item)
+			if strings.Contains(strings.TrimSpace(item), prefixAdd) && strings.HasPrefix(strings.TrimSpace(items[i+1]), prefixAdd1) {
+				result = append(result, items[i+1])
+				result = append(result, allowAppend)
+				i++
+			} else if strings.Contains(strings.TrimSpace(item), prefixPut) && strings.HasPrefix(strings.TrimSpace(items[i+1]), prefixPut1) {
+				result = append(result, items[i+1])
+				result = append(result, allowAppend)
+				i++
+			}
 			continue
 		}
 		isAppend := false
