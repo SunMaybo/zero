@@ -236,7 +236,7 @@ func uploadDirectoryFileTree(bucket *oss.Bucket, contextPath, output string) {
 				if err := bucket.PutObjectFromFile(file.objectKey, file.filepath); err != nil {
 					zap.S().Fatalf("uploader err,%s", err.Error())
 				}
-				if err := bucket.SetObjectACL(file.objectKey, oss.ACLPublicReadWrite); err != nil {
+				if err := bucket.SetObjectACL(file.objectKey, oss.ACLPublicRead); err != nil {
 					zap.S().Fatalf("uploader err,%s", err.Error())
 				}
 			}
