@@ -17,16 +17,11 @@ public abstract class {{.ServiceName}} extends {{.GrpcFileName}}.{{.ServiceBaseN
 	{{if eq $method.IsStream 0}}
     @Override
     public void {{$method.ReturnParam}} {{$method.Method}}({{$method.Param1}}, {{$method.Param2}}) {
- 		try {        
  			if (Context.current().isCancelled()) {
-                responseObserver.onError(Status.CANCELLED.withDescription("Cancelled by client").asRuntimeException());
-                return;
+               throw Status.CANCELLED.withDescription("Cancelled by client").asRuntimeException();
             }
 			responseObserver.onNext({{$method.Method}}(request));
         	responseObserver.onCompleted();
-        } catch (StatusRuntimeException e) {
-            responseObserver.onError(e);
-        }
     }
     {{$method.MethodComment}}
     protected abstract {{$method.Param2T}} {{$method.Method}}({{$method.Param1}});
