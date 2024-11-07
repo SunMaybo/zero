@@ -64,6 +64,20 @@ func JavaGrpcPackage(project, groupId, artifactId, version string) {
 		zlog.S.Errorw("create ExtendValidator.java error", "err", err)
 		os.Exit(-1)
 	}
+
+	if err := file.MkdirAll(file.GetFilePath(protoProject, "/src/main/java/cn/zero/grpc/proto/xbb")); err != nil {
+		zlog.S.Errorw("create proto extend dir error", "err", err)
+		os.Exit(-1)
+	}
+	if err := file.WriterFile(file.GetFilePath(protoProject, "/src/main/java/cn/zero/grpc/proto/xbb/Xbb.java"), []byte(install.XBB_GRPC_CLAZZ)); err != nil {
+		zlog.S.Errorw("create Extend.java error", "err", err)
+		os.Exit(-1)
+	}
+	if err := file.WriterFile(file.GetFilePath(protoProject, "/src/main/java/cn/zero/grpc/proto/xbb/XbbValidator.java"), []byte(install.XBB_VALIDATE_CLAZZ)); err != nil {
+		zlog.S.Errorw("create ExtendValidator.java error", "err", err)
+		os.Exit(-1)
+	}
+
 	if err := file.MkdirAll(file.GetFilePath(protoProject, "/src/main/resources")); err != nil {
 		zlog.S.Errorw("create proto project dir error", "err", err)
 		os.Exit(-1)
@@ -160,11 +174,22 @@ func JavaGrpcCompileAndDeploy(mavenBinPath, mavenSettings, protoProjectDir, altD
 }
 
 var replaceMap = map[string]string{
-	"(double value)": "(java.lang.Double value)",
-	"(int value)":    "(java.lang.Integer value)",
-	"(long value)":   "(java.lang.Long value)",
-	"(float value)":  "(java.lang.Float value)",
+	"(double value)":  "(java.lang.Double value)",
+	"(int value)":     "(java.lang.Integer value)",
+	"(long value)":    "(java.lang.Long value)",
+	"(float value)":   "(java.lang.Float value)",
+	"(boolean value)": "(java.lang.Float value)",
 }
+
+var appendFuncMap = map[string]string{
+	"(double value)":  "public Builder %sVal(java.lang.Double value) {if (value==null) return this;return %s(value);}",
+	"(int value)":     "public Builder %sVal(java.lang.Integer value) {if (value==null) return this;return %s(value);}",
+	"(long value)":    "public Builder %sVal(java.lang.Long value) {if (value==null) return this;return %s(value);}",
+	"(float value)":   "public Builder %sVal(java.lang.Float value) {if (value==null) return this;return %s(value);}",
+	"(boolean value)": "public Builder %sVal(java.lang.Boolean value) {if (value==null) return this;return %s(value);}",
+	"String":          "public Builder %sVal(java.lang.String value) {if (value==null) return this;return %s(value);}",
+}
+
 var filterBySuffix = map[string]struct{}{
 	"Builder":   {},
 	"Validator": {},
@@ -172,13 +197,23 @@ var filterBySuffix = map[string]struct{}{
 	"Proto":     {},
 }
 
+const prefix = "public Builder set"
+
+const prefixAdd = "public Builder addAll"
+const prefixAdd1 = "java.lang.Iterable"
+
+const prefixPut = "public Builder putAll"
+const prefixPut1 = "java.util.Map"
+
+const allowAppend = " if (values == null) return this;"
+
 func SwitchGrpcJavaType(path string) {
 	for s := range filterBySuffix {
 		if strings.HasSuffix(path, s) {
 			return
 		}
 	}
-	prefix := "public Builder set"
+
 	buff, err := os.ReadFile(path)
 	if err != nil {
 		return
@@ -189,27 +224,32 @@ func SwitchGrpcJavaType(path string) {
 		item := items[i]
 		if item == "" {
 			result = append(result, item)
-		} else if strings.HasPrefix(strings.TrimSpace(item), "java.lang.String value) {") {
-			if len(items) > i+2 && strings.HasPrefix(strings.TrimSpace(items[i+1]), "if (value == null) {") && strings.Contains(items[i+2], "throw new NullPointerException();") {
-				result = append(result, items[i])
-				result = append(result, items[i+1])
-				result = append(result, strings.ReplaceAll(items[i+2], "throw new NullPointerException();", "return this;"))
-				i += 2
-				continue
-			} else {
-				result = append(result, item)
-				continue
-			}
+		} else if name, isOk := parseFuncName(item); isOk && strings.HasPrefix(strings.TrimSpace(items[i+1]), "java.lang.String value) {") {
+			result = append(result, fmt.Sprintf(appendFuncMap["String"], name, name))
+			result = append(result, "@Deprecated")
+			result = append(result, item)
+			continue
 		} else if !strings.HasPrefix(strings.TrimSpace(item), prefix) {
 			result = append(result, item)
+			if strings.Contains(strings.TrimSpace(item), prefixAdd) && strings.HasPrefix(strings.TrimSpace(items[i+1]), prefixAdd1) {
+				result = append(result, items[i+1])
+				result = append(result, allowAppend)
+				i++
+			} else if strings.Contains(strings.TrimSpace(item), prefixPut) && strings.HasPrefix(strings.TrimSpace(items[i+1]), prefixPut1) {
+				result = append(result, items[i+1])
+				result = append(result, allowAppend)
+				i++
+			}
 			continue
 		}
 		isAppend := false
-		for k, v := range replaceMap {
-			if strings.Contains(item, k) {
-				item = strings.ReplaceAll(item, k, v)
+		for k := range replaceMap {
+			if strings.Contains(item, k) && strings.Contains(item, prefix) {
+				if name, isOk := parseFuncName(item); isOk {
+					result = append(result, fmt.Sprintf(appendFuncMap[k], name, name))
+				}
+				result = append(result, "@Deprecated")
 				result = append(result, item)
-				result = append(result, "        if (value==null) return this;")
 				isAppend = true
 				break
 			}
@@ -219,6 +259,21 @@ func SwitchGrpcJavaType(path string) {
 		}
 	}
 	_ = os.WriteFile(path, []byte(strings.Join(result, "\n")), 0777)
+}
+func parseFuncName(item string) (string, bool) {
+	if strings.Contains(item, prefix) {
+		beginIdx := strings.Index(item, prefix) + len(prefix)
+		if beginIdx <= 0 {
+			return "", false
+		}
+		item = item[beginIdx:]
+		endIdx := strings.Index(item, "(")
+		if endIdx <= 0 {
+			return "", false
+		}
+		return "set" + item[:endIdx], true
+	}
+	return "", false
 }
 
 func JavaGrpcDeploy(mavenBinPath, mavenSettings, protoProjectDir, altDeploymentRepository string) error {
