@@ -1,6 +1,7 @@
 package release
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/SunMaybo/zero/zctl/cmd"
@@ -36,7 +37,13 @@ func completer(d prompt.Document) []prompt.Suggest {
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
 
-func Delay(env string, path, cdnUrl string, isScale bool, pk, cdnPk, dingTalkSecret string, isSaas bool, isCommon bool) {
+type OssConfig struct {
+	Bucket    string `json:"bucket"`
+	AccessKey string `json:"access_key"`
+	SecretKey string `json:"secret_key"`
+}
+
+func Delay(env string, path, cdnUrl, bucket string, isScale bool, pk, cdnPk, dingTalkSecret string, isSaas bool, isCommon bool) {
 	if pk == "" {
 		log.Println("please config front_web_pk on .zctl.yaml")
 	}
@@ -81,15 +88,29 @@ func Delay(env string, path, cdnUrl string, isScale bool, pk, cdnPk, dingTalkSec
 	if passowrd, err = input("password"); err != nil {
 		log.Fatal(err)
 	}
+	var cfgs []OssConfig
 	accessKey := ""
 	secretKey := ""
 	endpoint := "oss-cn-beijing.aliyuncs.com"
-	if result, err := DecryptByAes(passowrd, pk); err != nil || !strings.Contains(string(result), "xbbossuploader") {
+	if result, err := DecryptByAes(passowrd, pk); err != nil {
 		log.Fatalf("you entered the password incorrectly")
 	} else {
-		log.Println("very good,please waiting......")
-		accessKey = strings.Split(string(result), "-")[0]
-		secretKey = strings.Split(string(result), "-")[1]
+		err = json.Unmarshal([]byte(result), &cfgs)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, cfig := range cfgs {
+			if cfig.Bucket == bucket {
+				log.Println("very good,please waiting......")
+				accessKey = cfig.AccessKey
+				secretKey = cfig.SecretKey
+				break
+			}
+		}
+
+	}
+	if accessKey == "" {
+		log.Fatalf("you oss Ak config err")
 	}
 	cdnAccessKey := ""
 	cdnSecretKey := ""
@@ -167,7 +188,7 @@ func Delay(env string, path, cdnUrl string, isScale bool, pk, cdnPk, dingTalkSec
 		}
 
 		// 填写存储空间名称，例如examplebucket。
-		bucket, err := client.Bucket("xbb-site")
+		bucket, err := client.Bucket(bucket)
 		if err != nil {
 			log.Fatalf("Error:%v", err)
 			os.Exit(-1)

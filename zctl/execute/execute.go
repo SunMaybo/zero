@@ -44,6 +44,7 @@ var (
 	isXhCloudFront          *bool
 	isXhCommonDelay         *bool
 	cdnUrl                  *string
+	product                 *string
 	isXhCommonFront         *bool
 	cdnPk                   string
 )
@@ -63,7 +64,11 @@ var delayFrontCommand = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := os.Getwd()
-		release.Delay(*envFront, path, *cdnUrl, false, frontWebPk, cdnPk, dingTalkSecret, *isXhCloudDelay, *isXhCommonDelay)
+		bucket := "xbb-site"
+		if product != nil {
+			bucket = *product + "-site"
+		}
+		release.Delay(*envFront, path, *cdnUrl, bucket, false, frontWebPk, cdnPk, dingTalkSecret, *isXhCloudDelay, *isXhCommonDelay)
 	},
 }
 var scaleFrontCommand = &cobra.Command{
@@ -72,7 +77,11 @@ var scaleFrontCommand = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := os.Getwd()
-		release.Delay("format", path, *cdnUrl, true, frontWebPk, cdnPk, dingTalkSecret, *isXhCloudFront, *isXhCommonFront)
+		bucket := "xbb-site"
+		if product != nil {
+			bucket = *product + "-site"
+		}
+		release.Delay("format", path, *cdnUrl, bucket, true, frontWebPk, cdnPk, dingTalkSecret, *isXhCloudFront, *isXhCommonFront)
 	},
 }
 
@@ -223,6 +232,7 @@ func init() {
 
 	envFront = delayFrontCommand.Flags().String("env", "qa39", "current delay env on qa、sandbox、format")
 	cdnUrl = delayFrontCommand.Flags().String("cdn_url", "", "服务地址例如:https://cdn.xh-dev.com/")
+	product = delayFrontCommand.Flags().String("product", "xbb", "current delay product xbb or superpay")
 	sqlDir = sqlToCommand.Flags().String("p", "", "sql dir")
 	sqlServiceName = sqlToCommand.Flags().String("s", "test", "service name")
 
