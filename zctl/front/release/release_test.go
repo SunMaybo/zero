@@ -8,7 +8,7 @@ import (
 )
 
 func TestDecrypt(t *testing.T) {
-	Delay("format", ".", "", false, "", "", "", true, false)
+	Delay("format", ".", "", "xbb-site", false, "", "", "", true, false)
 }
 func TestEncrypt(t *testing.T) {
 	t.Log(EncryptByAes("xbb123:::", []byte("")))
