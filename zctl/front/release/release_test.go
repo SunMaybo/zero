@@ -10,7 +10,6 @@ import (
 func TestDecrypt(t *testing.T) {
 	Delay("format", ".", "", "xbb-site", false, "", "", "", true, false)
 }
-
 func TestUploadCompanyWebsite(t *testing.T) {
 	endpoint := "oss-cn-beijing.aliyuncs.com"
 	client, err := oss.New(endpoint, "", "")
