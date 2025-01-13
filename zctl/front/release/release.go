@@ -95,7 +95,7 @@ func Delay(env string, path, cdnUrl, bucket string, isScale bool, pk, cdnPk, din
 	if result, err := DecryptByAes(passowrd, pk); err != nil {
 		log.Fatalf("you entered the password incorrectly")
 	} else {
-		err = json.Unmarshal([]byte(result), &cfgs)
+		err = json.Unmarshal(result, &cfgs)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -112,15 +112,15 @@ func Delay(env string, path, cdnUrl, bucket string, isScale bool, pk, cdnPk, din
 	if accessKey == "" {
 		log.Fatalf("you oss Ak config err")
 	}
-	cdnAccessKey := ""
-	cdnSecretKey := ""
-	if result, err := DecryptByAes(passowrd, cdnPk); err != nil {
-		log.Fatalf("you entered the password incorrectly")
-	} else {
-		log.Println("very good,please waiting......")
-		cdnAccessKey = strings.Split(string(result), "-")[0]
-		cdnSecretKey = strings.Split(string(result), "-")[1]
-	}
+	//cdnAccessKey := ""
+	//cdnSecretKey := ""
+	//if result, err := DecryptByAes(passowrd, cdnPk); err != nil {
+	//	log.Fatalf("you entered the password incorrectly")
+	//} else {
+	//	log.Println("very good,please waiting......")
+	//	cdnAccessKey = strings.Split(string(result), "-")[0]
+	//	cdnSecretKey = strings.Split(string(result), "-")[1]
+	//}
 
 	var delayDirs []string
 	//4. 线上版本打tag并上传
@@ -229,14 +229,14 @@ func Delay(env string, path, cdnUrl, bucket string, isScale bool, pk, cdnPk, din
 	}
 	//5.线上
 	zap.S().Info("uploader success.....")
-	if isOnline && cdnUrl != "" {
-		//6.刷新cdn
-		err = RefreshCdn(cdnUrl, cdnAccessKey, cdnSecretKey)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("refresh cdn[%s] success.....", cdnUrl)
-	}
+	//if isOnline && cdnUrl != "" {
+	//	//6.刷新cdn
+	//	err = RefreshCdn(cdnUrl, cdnAccessKey, cdnSecretKey)
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//	log.Printf("refresh cdn[%s] success.....", cdnUrl)
+	//}
 
 }
 
