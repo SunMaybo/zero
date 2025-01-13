@@ -10,9 +10,6 @@ import (
 func TestDecrypt(t *testing.T) {
 	Delay("format", ".", "", "xbb-site", false, "", "", "", true, false)
 }
-func TestEncrypt(t *testing.T) {
-	t.Log(EncryptByAes("xbb123:::", []byte("")))
-}
 
 func TestUploadCompanyWebsite(t *testing.T) {
 	endpoint := "oss-cn-beijing.aliyuncs.com"
